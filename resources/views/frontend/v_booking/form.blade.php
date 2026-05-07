@@ -52,11 +52,6 @@
                                 <input type="text" class="form-control bg-white"
                                     value="{{ Auth::user()->phone ?? '-' }}" readonly>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">NIK</label>
-                                <input type="text" class="form-control bg-white"
-                                    value="{{ Auth::user()->nik ?? '-' }}" readonly>
-                            </div>
                         </div>
                         <small class="text-muted mt-2 d-block">
                             <i class="fa fa-info-circle me-1"></i>
