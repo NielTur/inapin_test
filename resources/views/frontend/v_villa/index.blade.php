@@ -246,73 +246,102 @@
             <div class="col-lg-3">
                 <form action="{{ route('villa.index') }}" method="GET" id="filterForm">
 
-                    @if(request('kota'))
-                    <input type="hidden" name="kota" value="{{ request('kota') }}">
-                    @endif
+                    <div class="bg-white rounded-4 shadow-sm p-4 mb-4" style="border: 1px solid #f0f0f0;">
 
-                    <div class="bg-light rounded p-4 mb-4 wow fadeInUp" data-wow-delay="0.1s">
-
-                        {{-- Header Filter --}}
-                        <h5 class="fw-bold mb-4">
-                            <i class="fa fa-filter text-primary me-2"></i> Filter
-                            @if(request()->hasAny(['harga_min','harga_max','rating','tamu','fasilitas','lokasi','sort']))
-                            <a href="{{ route('villa.index') }}"
-                                class="btn btn-sm btn-outline-secondary float-end"
-                                style="font-size:11px; padding:2px 8px;">Reset</a>
+                        {{-- Header --}}
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                                <span style="background:#edf7f3; color:var(--primary); width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                                    <i class="fa fa-sliders-h" style="font-size:13px;"></i>
+                                </span>
+                                Filter
+                            </h6>
+                            @if(request()->hasAny(['harga_min','harga_max','rating','kota','fasilitas','kamar','sort']))
+                            <a href="{{ route('villa.index') }}" class="text-muted small text-decoration-none" style="font-size:12px;">
+                                <i class="fa fa-times me-1"></i> Reset
+                            </a>
                             @endif
-                        </h5>
+                        </div>
 
-                        {{-- Rentang Harga --}}
-                        <div class="mb-4 pb-4 border-bottom">
-                            <h6 class="fw-semibold mb-3">Rentang Harga</h6>
-                            <div class="row g-2 mb-2">
-                                <div class="col-6">
-                                    <label class="form-label small text-muted">Min</label>
-                                    <input type="number" name="harga_min"
-                                        class="form-control form-control-sm"
-                                        placeholder="0"
-                                        value="{{ request('harga_min') }}">
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small text-muted">Max</label>
-                                    <input type="number" name="harga_max"
-                                        class="form-control form-control-sm"
-                                        placeholder="10000000"
-                                        value="{{ request('harga_max') }}">
-                                </div>
+                        {{-- ===== RENTANG HARGA (Slider) ===== --}}
+                        <div class="mb-4 pb-4" style="border-bottom: 1px solid #f0f0f0;">
+                            <h6 class="fw-semibold mb-3" style="font-size:13px; color:#333;">Rentang Harga</h6>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="small fw-semibold text-primary" id="labelMin">
+                                    Rp {{ number_format(request('harga_min', 0), 0, ',', '.') }}
+                                </span>
+                                <span class="small fw-semibold text-primary" id="labelMax">
+                                    Rp {{ number_format(request('harga_max', 10000000), 0, ',', '.') }}
+                                </span>
                             </div>
-                            <small class="text-muted d-block mb-3">
-                                Rp {{ number_format($hargaMin, 0, ',', '.') }}
-                                — Rp {{ number_format($hargaMax, 0, ',', '.') }}
-                            </small>
-                            <button type="submit" class="btn btn-primary btn-sm w-100">
-                                Terapkan Harga
+
+                            {{-- Slider --}}
+                            <div class="mb-2">
+                                <input type="range" class="form-range" id="sliderMin" min="0" max="10000000" step="100000"
+                                    value="{{ request('harga_min', 0) }}"
+                                    oninput="updateHarga('min', this.value)">
+                                <input type="range" class="form-range" id="sliderMax" min="0" max="10000000" step="100000"
+                                    value="{{ request('harga_max', 10000000) }}"
+                                    oninput="updateHarga('max', this.value)">
+                            </div>
+
+                            <input type="hidden" name="harga_min" id="inputHargaMin" value="{{ request('harga_min', 0) }}">
+                            <input type="hidden" name="harga_max" id="inputHargaMax" value="{{ request('harga_max', 10000000) }}">
+
+                            <button type="submit" class="btn btn-primary btn-sm w-100 mt-1" style="border-radius:8px;">
+                                Terapkan
                             </button>
                         </div>
 
-                        {{-- Rating --}}
-                        <div class="mb-4 pb-4 border-bottom">
-                            <h6 class="fw-semibold mb-3">Rating</h6>
+                        {{-- ===== RATING ===== --}}
+                        <div class="mb-4 pb-4" style="border-bottom: 1px solid #f0f0f0;">
+                            <h6 class="fw-semibold mb-3" style="font-size:13px; color:#333;">Rating</h6>
                             @foreach([5.0 => '5.0', 4.5 => '4.5', 4.0 => '4.0', 3.5 => '3.5', 3.0 => '3.0'] as $val => $label)
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio"
-                                    name="rating" id="rating{{ $val }}" value="{{ $val }}"
+                            <div class="mb-1">
+                                <input class="d-none" type="radio" name="rating"
+                                    id="rating{{ str_replace('.', '_', $val) }}" value="{{ $val }}"
                                     {{ request('rating') == $val ? 'checked' : '' }}
                                     onchange="this.form.submit()">
-                                <label class="form-check-label d-flex align-items-center gap-1" for="rating{{ $val }}">
-                                    @for($i = 1; $i <= 5; $i++)
-                                        <i class="fa fa-star {{ $i <= $val ? 'text-warning' : 'text-muted' }}"
-                                        style="font-size:11px;"></i>
-                                        @endfor
-                                        <span class="ms-1 small">{{ $label }}</span>
+                                <label class="d-flex align-items-center gap-2 py-1 px-2 rounded w-100"
+                                    for="rating{{ str_replace('.', '_', $val) }}"
+                                    style="cursor:pointer; background: {{ request('rating') == $val ? '#edf7f3' : 'transparent' }}; transition:.15s;">
+                                    <div class="d-flex gap-1">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            <i class="fa fa-star {{ $i <= $val ? 'text-warning' : 'text-muted' }}" style="font-size:11px;"></i>
+                                            @endfor
+                                    </div>
+                                    <span class="small fw-medium">{{ $label }}</span>
                                 </label>
                             </div>
                             @endforeach
                         </div>
 
-                        {{-- Fasilitas --}}
-                        <div class="mb-4 pb-4 border-bottom">
-                            <h6 class="fw-semibold mb-3">Fasilitas</h6>
+                        {{-- ===== JUMLAH KAMAR ===== --}}
+                        <div class="mb-4 pb-4" style="border-bottom: 1px solid #f0f0f0;">
+                            <h6 class="fw-semibold mb-3" style="font-size:13px; color:#333;">Jumlah Kamar</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach([1, 2, 3, 4, 5] as $k)
+                                <input type="radio" class="d-none" name="kamar"
+                                    id="kamar{{ $k }}" value="{{ $k }}"
+                                    {{ request('kamar') == $k ? 'checked' : '' }}
+                                    onchange="this.form.submit()">
+                                <label for="kamar{{ $k }}"
+                                    class="px-3 py-1 rounded-pill small fw-medium"
+                                    style="cursor:pointer;
+                                   border: 1.5px solid {{ request('kamar') == $k ? 'var(--primary)' : '#dee2e6' }};
+                                   background: {{ request('kamar') == $k ? '#edf7f3' : '#fff' }};
+                                   color: {{ request('kamar') == $k ? 'var(--primary)' : '#666' }};
+                                   transition:.15s;">
+                                    {{ $k }}{{ $k == 5 ? '+' : '' }} Kamar
+                                </label>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- ===== FASILITAS ===== --}}
+                        <div class="mb-4 pb-4" style="border-bottom: 1px solid #f0f0f0;">
+                            <h6 class="fw-semibold mb-3" style="font-size:13px; color:#333;">Fasilitas</h6>
                             @php
                             $fasilitasOptions = [
                             'Kolam Renang' => 'fa-swimming-pool',
@@ -327,42 +356,90 @@
                             $fasilitasTerpilih = request()->has('fasilitas') ? (array) request('fasilitas') : [];
                             @endphp
                             @foreach($fasilitasOptions as $nama => $icon)
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox"
+                            <div class="d-flex align-items-center justify-content-between py-2"
+                                style="border-bottom: 1px solid #fafafa;">
+                                <label class="d-flex align-items-center gap-2 mb-0 small w-100"
+                                    for="fas_{{ Str::slug($nama) }}" style="cursor:pointer;">
+                                    <i class="fas {{ $icon }} text-primary" style="width:14px; font-size:12px;"></i>
+                                    {{ $nama }}
+                                </label>
+                                <input class="form-check-input m-0 flex-shrink-0" type="checkbox"
                                     name="fasilitas[]"
                                     id="fas_{{ Str::slug($nama) }}"
                                     value="{{ $nama }}"
                                     {{ in_array($nama, $fasilitasTerpilih) ? 'checked' : '' }}
                                     onchange="this.form.submit()">
-                                <label class="form-check-label small" for="fas_{{ Str::slug($nama) }}">
-                                    <i class="fas {{ $icon }} text-primary me-1" style="width:14px;"></i>
-                                    {{ $nama }}
-                                </label>
                             </div>
                             @endforeach
                         </div>
 
-                        {{-- Lokasi / Kota --}}
-                        <div class="mb-2">
-                            <h6 class="fw-semibold mb-3">Lokasi</h6>
+                        {{-- ===== AREA  ===== --}}
+                        <div>
+                            <h6 class="fw-semibold mb-3" style="font-size:13px; color:#333;">Area</h6>
+                            @php $kotaShown = 0; @endphp
                             @foreach($kotaList as $kota)
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio"
-                                    name="kota" id="kota_{{ Str::slug($kota) }}" value="{{ $kota }}"
-                                    {{ request('kota') == $kota ? 'checked' : '' }}
-                                    onchange="this.form.submit()">
-                                <label class="form-check-label small" for="kota_{{ Str::slug($kota) }}">
-                                    <i class="fa fa-map-marker-alt text-primary me-1"></i>
+                            @php
+                            $jumlahVilla = \App\Models\Villa::where('status','aktif')->where('kota',$kota)->count();
+                            @endphp
+                            <div class="d-flex align-items-center justify-content-between py-2 {{ $kotaShown >= 5 ? 'kota-extra' : '' }}"
+                                style="border-bottom: 1px solid #fafafa; {{ $kotaShown >= 5 ? 'display:none!important;' : '' }}">
+                                <label class="d-flex align-items-center gap-2 mb-0 small w-100"
+                                    for="kota_{{ Str::slug($kota) }}" style="cursor:pointer; font-weight: {{ request('kota') == $kota ? '600' : '400' }};">
+                                    <input class="form-check-input m-0 flex-shrink-0" type="radio"
+                                        name="kota"
+                                        id="kota_{{ Str::slug($kota) }}"
+                                        value="{{ $kota }}"
+                                        {{ request('kota') == $kota ? 'checked' : '' }}
+                                        onchange="this.form.submit()">
                                     {{ $kota }}
                                 </label>
+                                <span class="text-muted flex-shrink-0" style="font-size:11px;">({{ $jumlahVilla }})</span>
                             </div>
+                            @php $kotaShown++; @endphp
                             @endforeach
+
+                            @if($kotaList->count() > 5)
+                            <button type="button" class="btn btn-link p-0 mt-2 text-primary small text-decoration-none"
+                                id="btnLihatSemua" onclick="lihatSemuaKota()">
+                                Lihat Semua <i class="fa fa-chevron-down ms-1" style="font-size:10px;"></i>
+                            </button>
+                            @endif
                         </div>
 
                     </div>
                 </form>
             </div>
-            {{-- end sidebar --}}
+
+            @push('scripts')
+            <script>
+                function updateHarga(type, value) {
+                    var min = parseInt(document.getElementById('sliderMin').value);
+                    var max = parseInt(document.getElementById('sliderMax').value);
+
+                    if (type === 'min' && min > max) {
+                        min = max;
+                        document.getElementById('sliderMin').value = min;
+                    }
+                    if (type === 'max' && max < min) {
+                        max = min;
+                        document.getElementById('sliderMax').value = max;
+                    }
+
+                    document.getElementById('inputHargaMin').value = min;
+                    document.getElementById('inputHargaMax').value = max;
+                    document.getElementById('labelMin').textContent = 'Rp ' + min.toLocaleString('id-ID');
+                    document.getElementById('labelMax').textContent = 'Rp ' + max.toLocaleString('id-ID');
+                }
+
+                function lihatSemuaKota() {
+                    document.querySelectorAll('.kota-extra').forEach(function(el) {
+                        el.style.removeProperty('display');
+                        el.style.setProperty('border-bottom', '1px solid #fafafa');
+                    });
+                    document.getElementById('btnLihatSemua').style.display = 'none';
+                }
+            </script>
+            @endpush
 
             {{-- ============ VILLA GRID (kanan) ============ --}}
             <div class="col-lg-9">

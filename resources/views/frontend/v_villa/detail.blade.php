@@ -210,43 +210,176 @@
                     </div>
                 </div>
 
-                {{-- Fasilitas --}}
-                @if($villa->fasilitasVilla->count() > 0)
-                <div class="mb-5 wow fadeInUp" data-wow-delay="0.2s">
-                    <h4 class="fw-bold mb-4">Fasilitas Villa</h4>
-                    <div class="row g-3">
-                        @php
-                        $ikonFasilitas = [
-                        'Kolam Renang' => 'fa-swimming-pool',
-                        'WiFi Gratis' => 'fa-wifi',
-                        'Dapur Lengkap' => 'fa-utensils',
-                        'Parkir Luas' => 'fa-parking',
-                        'BBQ Area' => 'fa-fire',
-                        'AC Setiap Kamar' => 'fa-snowflake',
-                        'Sarapan' => 'fa-coffee',
-                        'Laundry' => 'fa-tshirt',
-                        ];
-                        @endphp
-                        @foreach($villa->fasilitasVilla as $f)
-                        <div class="col-6 col-md-4">
-                            <div class="d-flex align-items-center gap-3 bg-light rounded p-3">
-                                <i class="fas {{ $ikonFasilitas[$f->fasilitas] ?? 'fa-check' }} text-primary fa-lg"></i>
-                                <span class="fw-medium">{{ $f->fasilitas }}</span>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-                @endif
+                {{-- ===== SECTION RATING — Tambahkan setelah Fasilitas, sebelum Peta ===== --}}
+                @php
+                $ulasanVilla = \App\Models\Ulasan::where('id_villa', $villa->id_villa)
+                ->with('customer')
+                ->latest()
+                ->get();
 
-                {{-- Peta --}}
-                <div class="mb-5 wow fadeInUp" data-wow-delay="0.3s">
-                    <h4 class="fw-bold mb-4">Lokasi Villa</h4>
-                    <p class="text-muted mb-3">
-                        <i class="fa fa-map-marker-alt text-primary me-2"></i>{{ $villa->alamat }}
-                    </p>
-                    <div id="peta-villa"></div>
-                </div>
+                $ulasanSaya = null;
+                $bolehRating = false;
+
+                if (Auth::check()) {
+                $ulasanSaya = \App\Models\Ulasan::where('id_villa', $villa->id_villa)
+                ->where('id_customer', Auth::id())
+                ->first();
+
+                $bolehRating = \App\Models\Pemesanan::where('id_customer', Auth::id())
+                ->where('id_villa', $villa->id_villa)
+                ->whereIn('status', ['dikonfirmasi', 'selesai'])
+                ->whereHas('detailPemesanan', function ($q) {
+                $q->where('tanggal_checkout', '<', now()->toDateString());
+                    })
+                    ->exists();
+                    }
+                    @endphp
+
+                    <div class="mb-5 wow fadeInUp" data-wow-delay="0.3s">
+                        <h4 class="fw-bold mb-4">
+                            Ulasan Tamu
+                            @if($villa->ulasan)
+                            <span class="badge bg-warning text-dark ms-2" style="font-size:14px;">
+                                <i class="fa fa-star me-1"></i>{{ $villa->ulasan }} / 5.0
+                            </span>
+                            @endif
+                        </h4>
+
+                        {{-- Form Rating (hanya kalau sudah login & boleh rating) --}}
+                        @auth
+                        @if($bolehRating)
+                        <div class="bg-light rounded p-4 mb-4">
+                            <h6 class="fw-bold mb-3">
+                                {{ $ulasanSaya ? 'Edit Rating Anda' : 'Berikan Rating' }}
+                            </h6>
+                            <form action="{{ route('ulasan.store') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="id_villa" value="{{ $villa->id_villa }}">
+
+                                {{-- Bintang interaktif --}}
+                                <div class="d-flex gap-2 mb-3" id="starContainer">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <input type="radio" name="rating" id="star{{ $i }}"
+                                        value="{{ $i }}" class="d-none"
+                                        {{ $ulasanSaya && $ulasanSaya->rating == $i ? 'checked' : '' }}>
+                                        <label for="star{{ $i }}"
+                                            class="fa fa-star fa-2x"
+                                            style="cursor:pointer; color: {{ $ulasanSaya && $ulasanSaya->rating >= $i ? '#ffc107' : '#dee2e6' }};"
+                                            onmouseover="hoverStar({{ $i }})"
+                                            onmouseout="resetStar()"
+                                            onclick="selectStar({{ $i }})">
+                                        </label>
+                                        @endfor
+                                </div>
+
+                                {{-- Komentar --}}
+                                <div class="mb-3">
+                                    <textarea name="komentar" class="form-control" rows="3"
+                                        placeholder="Ceritakan pengalaman menginap Anda... (opsional)"
+                                        maxlength="500">{{ $ulasanSaya?->komentar }}</textarea>
+                                    <small class="text-muted">Maks. 500 karakter</small>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="fa fa-paper-plane me-2"></i>
+                                    {{ $ulasanSaya ? 'Update Rating' : 'Kirim Rating' }}
+                                </button>
+                            </form>
+                        </div>
+                        @elseif(!$ulasanSaya)
+                        <div class="alert alert-info mb-4" style="border-radius:10px;">
+                            <i class="fa fa-info-circle me-2"></i>
+                            Anda bisa memberikan rating setelah checkout dari villa ini.
+                        </div>
+                        @endif
+                        @else
+                        <div class="alert alert-light border mb-4" style="border-radius:10px;">
+                            <i class="fa fa-star me-2 text-warning"></i>
+                            <a href="{{ route('login') }}" class="text-primary fw-semibold">Masuk</a>
+                            untuk memberikan rating villa ini.
+                        </div>
+                        @endauth
+
+                        {{-- Daftar Ulasan --}}
+                        @if($ulasanVilla->count() > 0)
+                        <div class="row g-3">
+                            @foreach($ulasanVilla as $u)
+                            <div class="col-12">
+                                <div class="bg-light rounded p-3">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            {{-- Avatar --}}
+                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                                                style="width:36px; height:36px; font-size:14px;">
+                                                {{ strtoupper(substr($u->customer->nama ?? 'T', 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold" style="font-size:14px;">
+                                                    {{ $u->customer->nama ?? 'Tamu' }}
+                                                </div>
+                                                <small class="text-muted">{{ $u->created_at->format('d M Y') }}</small>
+                                            </div>
+                                        </div>
+                                        {{-- Bintang --}}
+                                        <div class="d-flex gap-1">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <i class="fa fa-star {{ $i <= $u->rating ? 'text-warning' : 'text-muted' }}"
+                                                style="font-size:12px;"></i>
+                                                @endfor
+                                        </div>
+                                    </div>
+                                    @if($u->komentar)
+                                    <p class="text-muted small mb-0">{{ $u->komentar }}</p>
+                                    @endif
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                        @else
+                        <div class="text-center py-4">
+                            <i class="fa fa-comment-slash fa-2x text-muted mb-2"></i>
+                            <p class="text-muted small mb-0">Belum ada ulasan untuk villa ini.</p>
+                        </div>
+                        @endif
+                    </div>
+
+                    {{-- Fasilitas --}}
+                    @if($villa->fasilitasVilla->count() > 0)
+                    <div class="mb-5 wow fadeInUp" data-wow-delay="0.2s">
+                        <h4 class="fw-bold mb-4">Fasilitas Villa</h4>
+                        <div class="row g-3">
+                            @php
+                            $ikonFasilitas = [
+                            'Kolam Renang' => 'fa-swimming-pool',
+                            'WiFi Gratis' => 'fa-wifi',
+                            'Dapur Lengkap' => 'fa-utensils',
+                            'Parkir Luas' => 'fa-parking',
+                            'BBQ Area' => 'fa-fire',
+                            'AC Setiap Kamar' => 'fa-snowflake',
+                            'Sarapan' => 'fa-coffee',
+                            'Laundry' => 'fa-tshirt',
+                            ];
+                            @endphp
+                            @foreach($villa->fasilitasVilla as $f)
+                            <div class="col-6 col-md-4">
+                                <div class="d-flex align-items-center gap-3 bg-light rounded p-3">
+                                    <i class="fas {{ $ikonFasilitas[$f->fasilitas] ?? 'fa-check' }} text-primary fa-lg"></i>
+                                    <span class="fw-medium">{{ $f->fasilitas }}</span>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- Peta --}}
+                    <div class="mb-5 wow fadeInUp" data-wow-delay="0.3s">
+                        <h4 class="fw-bold mb-4">Lokasi Villa</h4>
+                        <p class="text-muted mb-3">
+                            <i class="fa fa-map-marker-alt text-primary me-2"></i>{{ $villa->alamat }}
+                        </p>
+                        <div id="peta-villa"></div>
+                    </div>
 
             </div>
 
@@ -325,6 +458,36 @@
 </div>
 
 @endsection
+
+
+@push('scripts')
+<script>
+    var selectedRating = {
+        {
+            $ulasanSaya ? $ulasanSaya - > rating : 0
+        }
+    };
+
+    function hoverStar(n) {
+        var stars = document.querySelectorAll('#starContainer label');
+        stars.forEach(function(s, i) {
+            s.style.color = i < n ? '#ffc107' : '#dee2e6';
+        });
+    }
+
+    function resetStar() {
+        var stars = document.querySelectorAll('#starContainer label');
+        stars.forEach(function(s, i) {
+            s.style.color = i < selectedRating ? '#ffc107' : '#dee2e6';
+        });
+    }
+
+    function selectStar(n) {
+        selectedRating = n;
+        document.getElementById('star' + n).checked = true;
+    }
+</script>
+@endpush
 
 @push('scripts')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />

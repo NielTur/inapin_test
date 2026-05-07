@@ -48,4 +48,9 @@ class Villa extends Model
     {
         return $this->hasMany(Pemesanan::class, 'id_villa', 'id_villa');
     }
+
+    public function ulasanVilla(): HasMany
+    {
+        return $this->hasMany(Ulasan::class, 'id_villa', 'id_villa');
+    }
 }

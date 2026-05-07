@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\OwnerController as AdminOwnerController;
 use App\Http\Controllers\Admin\VillaController as AdminVillaController;
 use App\Http\Controllers\Admin\PesananController as AdminPesananController;
+use App\Http\Controllers\Frontend\UlasanController;
 
 
 // ===================================================================
@@ -40,6 +41,8 @@ Route::prefix('')->group(function () {
         Route::delete('/booking/{id}/hapus', [BookingController::class, 'hapus'])->name('booking.hapus');
         Route::get('/akun/profil', [AkunController::class, 'profil'])->name('akun.profil');
         Route::post('/akun/profil', [AkunController::class, 'updateProfil'])->name('akun.updateProfil');
+
+        Route::post('/ulasan', [UlasanController::class, 'store'])->name('ulasan.store');
     });
 });
 
