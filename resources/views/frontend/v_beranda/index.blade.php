@@ -13,6 +13,13 @@
     .hero-img {
         transform-origin: center center;
     }
+
+    .search-banner,
+    .search-banner .container,
+    .search-banner .row,
+    .search-banner .col-md-2 {
+        overflow: visible !important;
+    }
 </style>
 @endpush
 
@@ -70,7 +77,10 @@
 
     function toggleGuestPicker() {
         var picker = document.getElementById('guestPicker');
-        picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+        var chevron = document.getElementById('chevronGuest');
+        var isOpen = picker.style.display !== 'none';
+        picker.style.display = isOpen ? 'none' : 'block';
+        chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
     }
 
     function changeCount(type, delta) {
@@ -78,12 +88,13 @@
             tamuVal = Math.max(1, tamuVal + delta);
             document.getElementById('tamuCount').textContent = tamuVal;
             document.getElementById('inputTamu').value = tamuVal;
+            document.getElementById('guestLabel').textContent = tamuVal + ' Tamu';
         } else {
             kamarVal = Math.max(1, kamarVal + delta);
             document.getElementById('kamarCount').textContent = kamarVal;
             document.getElementById('inputKamar').value = kamarVal;
+            document.getElementById('kamarLabel').textContent = kamarVal + ' Kamar';
         }
-        document.getElementById('guestLabel').textContent = tamuVal + ' Tamu, ' + kamarVal + ' Kamar';
     }
 
     // Tutup picker kalau klik di luar
@@ -173,12 +184,23 @@
                 </div>
 
                 {{-- Tamu & Kamar --}}
-                <div class="col-md-2 position-relative">
-                    <div class="bg-white rounded px-3 py-2 h-100" style="cursor:pointer;" onclick="toggleGuestPicker()">
-                        <small class="text-muted d-block" style="font-size:11px; text-transform:uppercase; letter-spacing:.5px;">Tamu & Kamar</small>
-                        <div class="fw-semibold" id="guestLabel" style="font-size:14px;">
-                            1 Tamu, 1 Kamar
+                <div class="col-md-2 position-relative" style="overflow:visible;">
+                    <div class="bg-white rounded px-3 py-2 h-100 d-flex align-items-center justify-content-between"
+                        style="cursor:pointer; min-height:46px;"
+                        onclick="toggleGuestPicker()">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa fa-user-friends text-muted" style="font-size:15px;"></i>
+                            <div>
+                                <div class="fw-semibold" id="guestLabel" style="font-size:14px; line-height:1.2;">
+                                    {{ request('tamu', 1) }} Tamu
+                                </div>
+                                <div id="kamarLabel" class="text-muted" style="font-size:11px; line-height:1.2;">
+                                    {{ request('kamar', 1) }} Kamar
+                                </div>
+                            </div>
                         </div>
+                        <i class="fa fa-chevron-down text-muted ms-2" id="chevronGuest"
+                            style="font-size:11px; transition:transform .2s;"></i>
                     </div>
 
                     {{-- Hidden inputs --}}
@@ -187,13 +209,13 @@
 
                     {{-- Dropdown Picker --}}
                     <div id="guestPicker" class="bg-white rounded shadow p-3 position-absolute"
-                        style="display:none; top:110%; left:0; width:260px; z-index:999; border:1px solid #eee;">
+                        style="display:none; top:110%; left:0; width:260px; z-index:99999; border:1px solid #eee;">
 
                         {{-- Tamu --}}
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <div class="fw-semibold" style="font-size:14px;">Tamu</div>
-                                <!-- <small class="text-muted">Dewasa</small> -->
+                                <small class="text-muted">Kapasitas Tamu</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle"
@@ -208,7 +230,7 @@
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <div class="fw-semibold" style="font-size:14px;">Kamar</div>
-                                <small class="text-muted">Jumlah kamar</small>
+                                <small class="text-muted">Jumlah Kamar</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle"
@@ -236,10 +258,7 @@
 
             {{-- Quick pick kota populer --}}
             <div class="mt-2 d-flex gap-2 flex-wrap">
-                @php
-                $kotaPopuler = $kotaPopuler ?? collect(['Bali', 'Puncak', 'Lombok', 'Bandung', 'Yogyakarta']);
-                @endphp
-                @foreach($kotaPopuler as $kota)
+                @foreach($kotaList as $kota)
                 <a href="{{ route('villa.index', ['kota' => $kota]) }}"
                     class="badge rounded-pill text-decoration-none px-3 py-2"
                     style="background:rgba(255,255,255,0.2); color:#fff; font-size:12px;">

@@ -59,7 +59,12 @@ class VillaController extends Controller
         $villas = $query->paginate(9)->withQueryString();
 
         // Data untuk filter sidebar
-        $kotaList   = Villa::where('status', 'aktif')->distinct()->pluck('kota');
+        $kotaList = Villa::where('status', 'aktif')
+            ->selectRaw('kota, COUNT(*) as total')
+            ->groupBy('kota')
+            ->orderByDesc('total')
+            ->pluck('kota')
+            ->take(5);
         $hargaMin   = Villa::where('status', 'aktif')->min('harga') ?? 0;
         $hargaMax   = Villa::where('status', 'aktif')->max('harga') ?? 10000000;
         $totalVilla = Villa::where('status', 'aktif')->count();

@@ -13,7 +13,7 @@ class VillaSeeder extends Seeder
             [
                 'nama_villa'  => 'Villa Bukit Hijau',
                 'deskripsi'   => 'Villa mewah dengan pemandangan bukit hijau yang memukau, cocok untuk keluarga besar.',
-                'kota'        => 'Puncak',
+                'kota'        => 'Bogor',
                 'harga'       => 1500000,
                 'kapasitas'   => 10,
                 'status'      => 'aktif',
@@ -122,6 +122,6 @@ class VillaSeeder extends Seeder
             }
         }
 
-        $this->command->info('VillaSeeder: 6 villa dummy berhasil dibuat!');
+        $this->command->info('VillaSeeder: 6 villa Megah berhasil dibuat!');
     }
 }

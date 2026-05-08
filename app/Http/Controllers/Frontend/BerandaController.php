@@ -27,15 +27,17 @@ class BerandaController extends Controller
             ->get();
 
         // Ambil daftar kota unik untuk quick-pick search bar
-        $kotaPopuler = Villa::where('status', 'aktif')
-            ->distinct()
+        $kotaList = Villa::where('status', 'aktif')
+            ->selectRaw('kota, COUNT(*) as total')
+            ->groupBy('kota')
+            ->orderByDesc('total')
             ->pluck('kota')
             ->take(5);
 
         return view('frontend.v_beranda.index', compact(
             'villasTerbaru',
             'villasFeatured',
-            'kotaPopuler'
+            'kotaList'
         ));
     }
 }
