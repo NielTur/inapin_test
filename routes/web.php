@@ -47,6 +47,8 @@ Route::prefix('owner')->name('owner.')->group(function () {
     // Login & Logout Owner (PUBLIC — belum perlu guard)
     Route::get('/login',  [OwnerAuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [OwnerAuthController::class, 'login']);
+    Route::get('/register',  [OwnerAuthController::class, 'showRegister'])->name('register');  
+    Route::post('/register', [OwnerAuthController::class, 'register']);                         
 
     // Panel Owner — PROTECTED dengan guard owner
     Route::middleware(['auth:owner'])->group(function () {
