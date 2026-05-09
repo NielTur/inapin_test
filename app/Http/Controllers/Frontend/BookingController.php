@@ -24,7 +24,6 @@ class BookingController extends Controller
         $checkout = $request->get('checkout', date('Y-m-d', strtotime('+1 day')));
         $tamu     = $request->get('tamu', 1);
 
-        // Hitung jumlah malam & total harga
         $malam = max(1, (int) ((strtotime($checkout) - strtotime($checkin)) / 86400));
         $total = $malam * $villa->harga;
 
@@ -46,16 +45,15 @@ class BookingController extends Controller
             'tanggal_checkout'  => 'required|date|after:tanggal_checkin',
             'metode_pembayaran' => 'required|string',
         ], [
-            'tanggal_checkin.after_or_equal'  => 'Tanggal check-in tidak boleh sebelum hari ini.',
-            'tanggal_checkout.after'           => 'Tanggal check-out harus setelah check-in.',
-            'metode_pembayaran.required'       => 'Pilih metode pembayaran.',
+            'tanggal_checkin.after_or_equal' => 'Tanggal check-in tidak boleh sebelum hari ini.',
+            'tanggal_checkout.after'          => 'Tanggal check-out harus setelah check-in.',
+            'metode_pembayaran.required'      => 'Pilih metode pembayaran.',
         ]);
 
         $villa = Villa::findOrFail($request->id_villa);
         $malam = (int) ((strtotime($request->tanggal_checkout) - strtotime($request->tanggal_checkin)) / 86400);
         $total = $malam * $villa->harga;
 
-        // Simpan pemesanan
         $pemesanan = Pemesanan::create([
             'id_villa'          => $villa->id_villa,
             'id_customer'       => Auth::id(),
@@ -63,7 +61,6 @@ class BookingController extends Controller
             'tanggal_pemesanan' => now(),
         ]);
 
-        // Simpan detail pemesanan
         DetailPemesanan::create([
             'id_pemesanan'     => $pemesanan->id_pemesanan,
             'tanggal_checkin'  => $request->tanggal_checkin,
@@ -72,8 +69,19 @@ class BookingController extends Controller
             'sub_total'        => $total,
         ]);
 
-        return redirect()->route('booking.riwayat')
-            ->with('success', 'Pemesanan berhasil! Menunggu konfirmasi dari owner villa.');
+        // ← Redirect ke halaman detail transaksi (bukan riwayat langsung)
+        return redirect()->route('booking.detail', $pemesanan->id_pemesanan);
+    }
+
+    // ── Detail Transaksi ──────────────────────────────────────────
+    public function detail($id): View
+    {
+        $pemesanan = Pemesanan::where('id_pemesanan', $id)
+            ->where('id_customer', Auth::id())
+            ->with(['villa.dokumenVilla', 'detailPemesanan'])
+            ->firstOrFail();
+
+        return view('frontend.v_booking.detail', compact('pemesanan'));
     }
 
     public function riwayat(): View

@@ -36,7 +36,7 @@ class BerandaController extends Controller
 
         return view('frontend.v_beranda.index', compact(
             'villasTerbaru',
-            'villasFeatured',
+            // 'villasFeatured',
             'kotaList'
         ));
     }

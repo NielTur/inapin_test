@@ -18,7 +18,7 @@ use App\Http\Controllers\Owner\AkunController as OwnerAkunController;
 Route::prefix('')->group(function () {
 
     // PUBLIC
-    Route::get('/',            [BerandaController::class, 'index'])->name('beranda');
+    Route::get('/beranda',     [BerandaController::class, 'index'])->name('beranda');
     Route::get('/villa',       [VillaController::class,   'index'])->name('villa.index');
     Route::get('/villa/{id}',  [VillaController::class,   'detail'])->name('villa.detail');
     Route::get('/login',       [AuthController::class,    'showLogin'])->name('login');
@@ -34,6 +34,7 @@ Route::prefix('')->group(function () {
         Route::post('/booking',             [BookingController::class, 'store'])->name('booking.store');
         Route::delete('/booking/{id}/batal', [BookingController::class, 'batal'])->name('booking.batal');
         Route::delete('/booking/{id}/hapus', [BookingController::class, 'hapus'])->name('booking.hapus');
+        Route::get('/booking/{id}/detail', [BookingController::class, 'detail'])->name('booking.detail');
         Route::get('/akun/profil',          [AkunController::class,   'profil'])->name('akun.profil');
         Route::post('/akun/profil',         [AkunController::class,   'updateProfil'])->name('akun.updateProfil');
     });
@@ -47,8 +48,8 @@ Route::prefix('owner')->name('owner.')->group(function () {
     // Login & Logout Owner (PUBLIC — belum perlu guard)
     Route::get('/login',  [OwnerAuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [OwnerAuthController::class, 'login']);
-    Route::get('/register',  [OwnerAuthController::class, 'showRegister'])->name('register');  
-    Route::post('/register', [OwnerAuthController::class, 'register']);                         
+    Route::get('/register',  [OwnerAuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [OwnerAuthController::class, 'register']);
 
     // Panel Owner — PROTECTED dengan guard owner
     Route::middleware(['auth:owner'])->group(function () {

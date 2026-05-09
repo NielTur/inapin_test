@@ -65,30 +65,34 @@
         }
     });
 
-    var tamuValVilla = parseInt(document.getElementById('inputTamuVilla').value) || 1;
-    var kamarValVilla = parseInt(document.getElementById('inputKamarVilla').value) || 1;
+    var tamuVal = parseInt(document.getElementById('inputTamu').value) || 1;
+    var kamarVal = parseInt(document.getElementById('inputKamar').value) || 1;
 
-    function toggleGuestPickerVilla() {
-        var picker = document.getElementById('guestPickerVilla');
-        picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+    function toggleGuestPicker() {
+        var picker = document.getElementById('guestPicker');
+        var chevron = document.getElementById('chevronGuest');
+        var isOpen = picker.style.display !== 'none';
+        picker.style.display = isOpen ? 'none' : 'block';
+        chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
     }
 
-    function changeCountVilla(type, delta) {
+    function changeCount(type, delta) {
         if (type === 'tamu') {
-            tamuValVilla = Math.max(1, tamuValVilla + delta);
-            document.getElementById('tamuCountVilla').textContent = tamuValVilla;
-            document.getElementById('inputTamuVilla').value = tamuValVilla;
+            tamuVal = Math.max(1, tamuVal + delta);
+            document.getElementById('tamuCount').textContent = tamuVal;
+            document.getElementById('inputTamu').value = tamuVal;
+            document.getElementById('guestLabel').textContent = tamuVal + ' Tamu';
         } else {
-            kamarValVilla = Math.max(1, kamarValVilla + delta);
-            document.getElementById('kamarCountVilla').textContent = kamarValVilla;
-            document.getElementById('inputKamarVilla').value = kamarValVilla;
+            kamarVal = Math.max(1, kamarVal + delta);
+            document.getElementById('kamarCount').textContent = kamarVal;
+            document.getElementById('inputKamar').value = kamarVal;
+            document.getElementById('kamarLabel').textContent = kamarVal + ' Kamar';
         }
-        document.getElementById('guestLabelVilla').textContent =
-            tamuValVilla + ' Tamu, ' + kamarValVilla + ' Kamar';
     }
 
+    // Tutup picker kalau klik di luar
     document.addEventListener('click', function(e) {
-        var picker = document.getElementById('guestPickerVilla');
+        var picker = document.getElementById('guestPicker');
         var wrapper = picker?.closest('.position-relative');
         if (picker && !wrapper?.contains(e.target)) {
             picker.style.display = 'none';
@@ -159,62 +163,69 @@
                         value="{{ request('checkout') }}">
                 </div>
 
-                {{-- Tamu & Kamar (gabungan) --}}
-                <div class="col-md-2 position-relative">
-                    <div class="bg-white rounded px-3 py-2 h-100"
-                        style="cursor:pointer; min-height:48px;"
-                        onclick="toggleGuestPickerVilla()">
-                        <small class="text-muted d-block" style="font-size:11px; text-transform:uppercase; letter-spacing:.5px;">Tamu & Kamar</small>
-                        <div class="fw-semibold" id="guestLabelVilla" style="font-size:14px;">
-                            {{ request('tamu', 1) }} Tamu, {{ request('kamar', 1) }} Kamar
+                <div class="col-md-2 position-relative" style="overflow:visible;">
+                    <div class="bg-white rounded px-3 py-2 h-100 d-flex align-items-center justify-content-between"
+                        style="cursor:pointer; min-height:46px;"
+                        onclick="toggleGuestPicker()">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa fa-user-friends text-muted" style="font-size:15px;"></i>
+                            <div>
+                                <div class="fw-semibold" id="guestLabel" style="font-size:14px; line-height:1.2;">
+                                    {{ request('tamu', 1) }} Tamu
+                                </div>
+                                <div id="kamarLabel" class="text-muted" style="font-size:11px; line-height:1.2;">
+                                    {{ request('kamar', 1) }} Kamar
+                                </div>
+                            </div>
                         </div>
+                        <i class="fa fa-chevron-down text-muted ms-2" id="chevronGuest"
+                            style="font-size:11px; transition:transform .2s;"></i>
                     </div>
 
-                    <input type="hidden" name="tamu" id="inputTamuVilla" value="{{ request('tamu', 1) }}">
-                    <input type="hidden" name="kamar" id="inputKamarVilla" value="{{ request('kamar', 1) }}">
+                    {{-- Hidden inputs --}}
+                    <input type="hidden" name="tamu" id="inputTamu" value="{{ request('tamu', 1) }}">
+                    <input type="hidden" name="kamar" id="inputKamar" value="{{ request('kamar', 1) }}">
 
                     {{-- Dropdown Picker --}}
-                    <div id="guestPickerVilla" class="bg-white rounded shadow p-3 position-absolute"
-                        style="display:none; top:110%; left:0; width:260px; z-index:999; border:1px solid #eee;">
+                    <div id="guestPicker" class="bg-white rounded shadow p-3 position-absolute"
+                        style="display:none; top:110%; left:0; width:260px; z-index:99999; border:1px solid #eee;">
 
+                        {{-- Tamu --}}
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <div class="fw-semibold" style="font-size:14px;">Tamu</div>
-                                <!-- <small class="text-muted">Dewasa</small> -->
+                                <small class="text-muted">Kapasitas Tamu</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle"
-                                    style="width:30px;height:30px;padding:0;"
-                                    onclick="changeCountVilla('tamu', -1)">−</button>
-                                <span id="tamuCountVilla" class="fw-bold">{{ request('tamu', 1) }}</span>
+                                    style="width:30px;height:30px;padding:0;" onclick="changeCount('tamu', -1)">−</button>
+                                <span id="tamuCount" class="fw-bold">{{ request('tamu', 1) }}</span>
                                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle"
-                                    style="width:30px;height:30px;padding:0;"
-                                    onclick="changeCountVilla('tamu', 1)">+</button>
+                                    style="width:30px;height:30px;padding:0;" onclick="changeCount('tamu', 1)">+</button>
                             </div>
                         </div>
 
+                        {{-- Kamar --}}
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <div class="fw-semibold" style="font-size:14px;">Kamar</div>
-                                <small class="text-muted">Jumlah kamar</small>
+                                <small class="text-muted">Jumlah Kamar</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle"
-                                    style="width:30px;height:30px;padding:0;"
-                                    onclick="changeCountVilla('kamar', -1)">−</button>
-                                <span id="kamarCountVilla" class="fw-bold">{{ request('kamar', 1) }}</span>
+                                    style="width:30px;height:30px;padding:0;" onclick="changeCount('kamar', -1)">−</button>
+                                <span id="kamarCount" class="fw-bold">{{ request('kamar', 1) }}</span>
                                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle"
-                                    style="width:30px;height:30px;padding:0;"
-                                    onclick="changeCountVilla('kamar', 1)">+</button>
+                                    style="width:30px;height:30px;padding:0;" onclick="changeCount('kamar', 1)">+</button>
                             </div>
                         </div>
 
-                        <button type="button" class="btn btn-primary btn-sm w-100"
-                            onclick="toggleGuestPickerVilla()">
+                        <button type="button" class="btn btn-primary btn-sm w-100" onclick="toggleGuestPicker()">
                             Selesai
                         </button>
                     </div>
                 </div>
+
 
                 {{-- Tombol Cari --}}
                 <div class="col-md-2 d-flex align-items-center">
@@ -263,35 +274,33 @@
                             @endif
                         </div>
 
-                        {{-- ===== RENTANG HARGA (Slider) ===== --}}
-                        <div class="mb-4 pb-4" style="border-bottom: 1px solid #f0f0f0;">
-                            <h6 class="fw-semibold mb-3" style="font-size:13px; color:#333;">Rentang Harga</h6>
-
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="small fw-semibold text-primary" id="labelMin">
-                                    Rp {{ number_format(request('harga_min', 0), 0, ',', '.') }}
-                                </span>
-                                <span class="small fw-semibold text-primary" id="labelMax">
-                                    Rp {{ number_format(request('harga_max', 10000000), 0, ',', '.') }}
-                                </span>
+                        {{-- ── RENTANG HARGA ───── --}}
+                        <div class="mb-4 pb-4" style="border-bottom:1px solid #f4f4f4;">
+                            <p class="filter-section-title">Rentang Harga</p>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label small text-muted mb-1">Min</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-light border-end-0 text-muted" style="font-size:11px;">Rp</span>
+                                        <input type="number" name="harga_min" class="form-control border-start-0 ps-0"
+                                            placeholder="0"
+                                            value="{{ request('harga_min') }}"
+                                            min="0" step="100000"
+                                            style="font-size:13px; border-radius:0 8px 8px 0;">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small text-muted mb-1">Max</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-light border-end-0 text-muted" style="font-size:11px;">Rp</span>
+                                        <input type="number" name="harga_max" class="form-control border-start-0 ps-0"
+                                            placeholder="10.000.000"
+                                            value="{{ request('harga_max') }}"
+                                            min="0" step="100000"
+                                            style="font-size:13px; border-radius:0 8px 8px 0;">
+                                    </div>
+                                </div>
                             </div>
-
-                            {{-- Slider --}}
-                            <div class="mb-2">
-                                <input type="range" class="form-range" id="sliderMin" min="0" max="10000000" step="100000"
-                                    value="{{ request('harga_min', 0) }}"
-                                    oninput="updateHarga('min', this.value)">
-                                <input type="range" class="form-range" id="sliderMax" min="0" max="10000000" step="100000"
-                                    value="{{ request('harga_max', 10000000) }}"
-                                    oninput="updateHarga('max', this.value)">
-                            </div>
-
-                            <input type="hidden" name="harga_min" id="inputHargaMin" value="{{ request('harga_min', 0) }}">
-                            <input type="hidden" name="harga_max" id="inputHargaMax" value="{{ request('harga_max', 10000000) }}">
-
-                            <button type="submit" class="btn btn-primary btn-sm w-100 mt-1" style="border-radius:8px;">
-                                Terapkan
-                            </button>
                         </div>
 
                         {{-- ===== RATING ===== --}}
@@ -315,28 +324,6 @@
                                 </label>
                             </div>
                             @endforeach
-                        </div>
-
-                        {{-- ===== JUMLAH KAMAR ===== --}}
-                        <div class="mb-4 pb-4" style="border-bottom: 1px solid #f0f0f0;">
-                            <h6 class="fw-semibold mb-3" style="font-size:13px; color:#333;">Jumlah Kamar</h6>
-                            <div class="d-flex flex-wrap gap-2">
-                                @foreach([1, 2, 3, 4, 5] as $k)
-                                <input type="radio" class="d-none" name="kamar"
-                                    id="kamar{{ $k }}" value="{{ $k }}"
-                                    {{ request('kamar') == $k ? 'checked' : '' }}
-                                    onchange="this.form.submit()">
-                                <label for="kamar{{ $k }}"
-                                    class="px-3 py-1 rounded-pill small fw-medium"
-                                    style="cursor:pointer;
-                                   border: 1.5px solid {{ request('kamar') == $k ? 'var(--primary)' : '#dee2e6' }};
-                                   background: {{ request('kamar') == $k ? '#edf7f3' : '#fff' }};
-                                   color: {{ request('kamar') == $k ? 'var(--primary)' : '#666' }};
-                                   transition:.15s;">
-                                    {{ $k }}{{ $k == 5 ? '+' : '' }} Kamar
-                                </label>
-                                @endforeach
-                            </div>
                         </div>
 
                         {{-- ===== FASILITAS ===== --}}

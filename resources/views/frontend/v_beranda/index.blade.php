@@ -72,8 +72,8 @@
         }
     });
 
-    var tamuValVilla = parseInt(document.getElementById('inputTamuVilla').value) || 1;
-    var kamarValVilla = parseInt(document.getElementById('inputKamarVilla').value) || 1;
+    var tamuVal = parseInt(document.getElementById('inputTamu').value) || 1;
+    var kamarVal = parseInt(document.getElementById('inputKamar').value) || 1;
 
     function toggleGuestPicker() {
         var picker = document.getElementById('guestPicker');
@@ -106,8 +106,6 @@
         }
     });
 </script>
-
-
 @endpush
 
 

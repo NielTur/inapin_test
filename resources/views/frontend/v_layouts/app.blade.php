@@ -27,6 +27,24 @@
     <link href="{{ asset('frontend/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('frontend/css/style.css') }}" rel="stylesheet">
 
+    {{-- Tambah setelah baris style.css --}}
+    <style>
+        .container-xxl {
+            overflow: visible !important;
+        }
+
+        .nav-item.dropdown {
+            position: static;
+        }
+
+        .nav-item.dropdown .dropdown-menu {
+            position: absolute !important;
+            right: 1rem !important;
+            left: auto !important;
+            top: 100% !important;
+        }
+    </style>
+
     @stack('styles')
 </head>
 
@@ -66,7 +84,7 @@
                             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                                 {{ auth()->user()->nama }}
                             </a>
-                            <div class="dropdown-menu rounded-0 m-0">
+                            <div class="dropdown-menu dropdown-menu-end rounded-0 m-0">
                                 <a href="{{ route('booking.riwayat') }}" class="dropdown-item">
                                     <i class="fa fa-history me-2"></i> Riwayat Pemesanan
                                 </a>

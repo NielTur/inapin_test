@@ -128,49 +128,37 @@
                     <h4 class="fw-bold mb-3">Tentang Villa Ini</h4>
                     <p class="text-muted lh-lg">{{ $villa->deskripsi ?? 'Deskripsi villa belum tersedia.' }}</p>
 
-                    {{-- Sosmed & WA --}}
                     @if($villa->instagram || $villa->facebook || $villa->tiktok || $villa->whatsapp)
                     <div class="mt-4 pt-3 border-top">
                         <p class="fw-semibold mb-3">Ikuti & Hubungi Villa Ini</p>
                         <div class="d-flex align-items-center gap-3 flex-wrap">
-
                             @if($villa->instagram)
                             <a href="https://instagram.com/{{ ltrim($villa->instagram, '@') }}"
-                                target="_blank"
-                                class="sosmed-btn text-white"
-                                style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);"
-                                title="Instagram">
+                                target="_blank" class="sosmed-btn text-white"
+                                style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);">
                                 <i class="fab fa-instagram"></i>
                             </a>
                             @endif
-
                             @if($villa->facebook)
                             <a href="https://facebook.com/{{ $villa->facebook }}"
-                                target="_blank"
-                                class="sosmed-btn text-white"
-                                style="background: #1877f2;"
-                                title="Facebook">
+                                target="_blank" class="sosmed-btn text-white"
+                                style="background:#1877f2;">
                                 <i class="fab fa-facebook-f"></i>
                             </a>
                             @endif
-
                             @if($villa->tiktok)
                             <a href="https://tiktok.com/@{{ ltrim($villa->tiktok, '@') }}"
-                                target="_blank"
-                                class="sosmed-btn text-white"
-                                style="background: #010101;"
-                                title="TikTok">
+                                target="_blank" class="sosmed-btn text-white"
+                                style="background:#010101;">
                                 <i class="fab fa-tiktok"></i>
                             </a>
                             @endif
-
                             @if($villa->whatsapp)
                             <div class="d-flex align-items-center gap-2 bg-light rounded px-3 py-2">
                                 <i class="fab fa-whatsapp text-success fa-lg"></i>
                                 <span class="fw-semibold">{{ $villa->whatsapp }}</span>
                             </div>
                             @endif
-
                         </div>
                     </div>
                     @endif
@@ -210,27 +198,19 @@
                     </div>
                 </div>
 
-                {{-- ===== SECTION RATING — Tambahkan setelah Fasilitas, sebelum Peta ===== --}}
+                {{-- Section Rating --}}
                 @php
                 $ulasanVilla = \App\Models\Ulasan::where('id_villa', $villa->id_villa)
-                ->with('customer')
-                ->latest()
-                ->get();
-
+                ->with('customer')->latest()->get();
                 $ulasanSaya = null;
                 $bolehRating = false;
-
                 if (Auth::check()) {
                 $ulasanSaya = \App\Models\Ulasan::where('id_villa', $villa->id_villa)
-                ->where('id_customer', Auth::id())
-                ->first();
-
+                ->where('id_customer', Auth::id())->first();
                 $bolehRating = \App\Models\Pemesanan::where('id_customer', Auth::id())
                 ->where('id_villa', $villa->id_villa)
                 ->whereIn('status', ['dikonfirmasi', 'selesai'])
-                ->whereHas('detailPemesanan', function ($q) {
-                $q->where('tanggal_checkout', '<', now()->toDateString());
-                    })
+                ->whereHas('detailPemesanan', fn($q) => $q->where('tanggal_checkout', '<', now()->toDateString()))
                     ->exists();
                     }
                     @endphp
@@ -245,41 +225,32 @@
                             @endif
                         </h4>
 
-                        {{-- Form Rating (hanya kalau sudah login & boleh rating) --}}
                         @auth
                         @if($bolehRating)
                         <div class="bg-light rounded p-4 mb-4">
-                            <h6 class="fw-bold mb-3">
-                                {{ $ulasanSaya ? 'Edit Rating Anda' : 'Berikan Rating' }}
-                            </h6>
+                            <h6 class="fw-bold mb-3">{{ $ulasanSaya ? 'Edit Rating Anda' : 'Berikan Rating' }}</h6>
                             <form action="{{ route('ulasan.store') }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="id_villa" value="{{ $villa->id_villa }}">
-
-                                {{-- Bintang interaktif --}}
                                 <div class="d-flex gap-2 mb-3" id="starContainer">
                                     @for($i = 1; $i <= 5; $i++)
                                         <input type="radio" name="rating" id="star{{ $i }}"
                                         value="{{ $i }}" class="d-none"
                                         {{ $ulasanSaya && $ulasanSaya->rating == $i ? 'checked' : '' }}>
-                                        <label for="star{{ $i }}"
-                                            class="fa fa-star fa-2x"
-                                            style="cursor:pointer; color: {{ $ulasanSaya && $ulasanSaya->rating >= $i ? '#ffc107' : '#dee2e6' }};"
+                                        <label for="star{{ $i }}" class="fa fa-star fa-2x"
+                                            style="cursor:pointer; color:{{ $ulasanSaya && $ulasanSaya->rating >= $i ? '#ffc107' : '#dee2e6' }};"
                                             onmouseover="hoverStar({{ $i }})"
                                             onmouseout="resetStar()"
                                             onclick="selectStar({{ $i }})">
                                         </label>
                                         @endfor
                                 </div>
-
-                                {{-- Komentar --}}
                                 <div class="mb-3">
                                     <textarea name="komentar" class="form-control" rows="3"
                                         placeholder="Ceritakan pengalaman menginap Anda... (opsional)"
                                         maxlength="500">{{ $ulasanSaya?->komentar }}</textarea>
                                     <small class="text-muted">Maks. 500 karakter</small>
                                 </div>
-
                                 <button type="submit" class="btn btn-primary px-4">
                                     <i class="fa fa-paper-plane me-2"></i>
                                     {{ $ulasanSaya ? 'Update Rating' : 'Kirim Rating' }}
@@ -300,7 +271,6 @@
                         </div>
                         @endauth
 
-                        {{-- Daftar Ulasan --}}
                         @if($ulasanVilla->count() > 0)
                         <div class="row g-3">
                             @foreach($ulasanVilla as $u)
@@ -308,23 +278,18 @@
                                 <div class="bg-light rounded p-3">
                                     <div class="d-flex align-items-center justify-content-between mb-2">
                                         <div class="d-flex align-items-center gap-2">
-                                            {{-- Avatar --}}
                                             <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0"
                                                 style="width:36px; height:36px; font-size:14px;">
                                                 {{ strtoupper(substr($u->customer->nama ?? 'T', 0, 1)) }}
                                             </div>
                                             <div>
-                                                <div class="fw-semibold" style="font-size:14px;">
-                                                    {{ $u->customer->nama ?? 'Tamu' }}
-                                                </div>
+                                                <div class="fw-semibold" style="font-size:14px;">{{ $u->customer->nama ?? 'Tamu' }}</div>
                                                 <small class="text-muted">{{ $u->created_at->format('d M Y') }}</small>
                                             </div>
                                         </div>
-                                        {{-- Bintang --}}
                                         <div class="d-flex gap-1">
                                             @for($i = 1; $i <= 5; $i++)
-                                                <i class="fa fa-star {{ $i <= $u->rating ? 'text-warning' : 'text-muted' }}"
-                                                style="font-size:12px;"></i>
+                                                <i class="fa fa-star {{ $i <= $u->rating ? 'text-warning' : 'text-muted' }}" style="font-size:12px;"></i>
                                                 @endfor
                                         </div>
                                     </div>
@@ -378,20 +343,25 @@
                         <p class="text-muted mb-3">
                             <i class="fa fa-map-marker-alt text-primary me-2"></i>{{ $villa->alamat }}
                         </p>
-                        {{-- Tambah ini --}}
                         <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($villa->alamat . ', ' . $villa->kota) }}"
-                            target="_blank"
-                            class="btn btn-outline-primary btn-sm mb-3">
+                            target="_blank" class="btn btn-outline-primary btn-sm mb-3">
                             <i class="fa fa-external-link-alt me-2"></i> Buka di Google Maps
                         </a>
                         <div id="peta-villa"></div>
                     </div>
 
             </div>
+            {{-- end col-lg-8 --}}
 
             {{-- ============ KANAN: Booking Card ============ --}}
             <div class="col-lg-4">
-                <div class="bg-light rounded p-4 mb-4 wow fadeInUp sticky-top" data-wow-delay="0.1s" style="top: 80px;">
+
+                {{-- Hidden inputs untuk JS --}}
+                <input type="hidden" id="namaVilla" value="{{ $villa->nama_villa }}">
+                <input type="hidden" id="alamatVilla" value="{{ $villa->alamat }}">
+                <input type="hidden" id="hargaVilla" value="{{ (int) $villa->harga }}">
+
+                <div class="bg-light rounded p-4 mb-4 wow fadeInUp sticky-top" data-wow-delay="0.1s" style="top:80px;">
 
                     <div class="mb-4">
                         <h3 class="text-primary fw-bold mb-1">
@@ -399,8 +369,6 @@
                         </h3>
                         <span class="text-muted">per malam</span>
                     </div>
-
-                    <input type="hidden" id="hargaVilla" value="{{ (int) $villa->harga }}">
 
                     @if($villa->ulasan)
                     <div class="d-flex align-items-center gap-2 mb-4">
@@ -426,30 +394,31 @@
                             <input type="date" name="checkout" class="form-control"
                                 min="{{ date('Y-m-d', strtotime('+1 day')) }}"
                                 value="{{ request('checkout') }}" required>
+                        </div>
 
-                            <div class="bg-white rounded p-3 mb-4">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted small">Harga per malam</span>
-                                    <span class="small fw-semibold">Rp {{ number_format($villa->harga, 0, ',', '.') }}</span>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted small">Total estimasi</span>
-                                    <span class="small fw-bold text-primary" id="totalHarga">—</span>
-                                </div>
+                        <div class="bg-white rounded p-3 mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted small">Harga per malam</span>
+                                <span class="small fw-semibold">Rp {{ number_format($villa->harga, 0, ',', '.') }}</span>
                             </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted small">Total estimasi</span>
+                                <span class="small fw-bold text-primary" id="totalHarga">—</span>
+                            </div>
+                        </div>
 
-                            @auth
-                            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold">
-                                <i class="fa fa-calendar-check me-2"></i> Pesan Sekarang
-                            </button>
-                            @else
-                            <a href="{{ route('login') }}" class="btn btn-primary w-100 py-3 fw-bold">
-                                <i class="fa fa-sign-in-alt me-2"></i> Masuk untuk Memesan
-                            </a>
-                            <p class="text-center text-muted small mt-2">
-                                Belum punya akun? <a href="{{ route('register') }}">Daftar gratis</a>
-                            </p>
-                            @endauth
+                        @auth
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold">
+                            <i class="fa fa-calendar-check me-2"></i> Pesan Sekarang
+                        </button>
+                        @else
+                        <a href="{{ route('login') }}" class="btn btn-primary w-100 py-3 fw-bold">
+                            <i class="fa fa-sign-in-alt me-2"></i> Masuk untuk Memesan
+                        </a>
+                        <p class="text-center text-muted small mt-2">
+                            Belum punya akun? <a href="{{ route('register') }}">Daftar gratis</a>
+                        </p>
+                        @endauth
                     </form>
 
                     <hr>
@@ -458,8 +427,10 @@
                         <p class="text-muted small mb-1">Dikelola oleh</p>
                         <p class="fw-semibold mb-0">{{ $villa->owner->nama ?? 'VillaKu Partner' }}</p>
                     </div>
+
                 </div>
             </div>
+            {{-- end col-lg-4 --}}
 
         </div>
     </div>
@@ -467,63 +438,100 @@
 
 @endsection
 
-
-@push('scripts')
-<script>
-    var selectedRating = {
-        {
-            $ulasanSaya ? $ulasanSaya - > rating : 0
-        }
-    };
-
-    function hoverStar(n) {
-        var stars = document.querySelectorAll('#starContainer label');
-        stars.forEach(function(s, i) {
-            s.style.color = i < n ? '#ffc107' : '#dee2e6';
-        });
-    }
-
-    function resetStar() {
-        var stars = document.querySelectorAll('#starContainer label');
-        stars.forEach(function(s, i) {
-            s.style.color = i < selectedRating ? '#ffc107' : '#dee2e6';
-        });
-    }
-
-    function selectStar(n) {
-        selectedRating = n;
-        document.getElementById('star' + n).checked = true;
-    }
-</script>
-@endpush
-
-@push('styles')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-@endpush
-
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+    // ===== PETA LEAFLET =====
     document.addEventListener('DOMContentLoaded', function() {
-        var map = L.map('peta-villa').setView([-6.2088, 106.8456], 13);
+        var namaVilla = document.getElementById('namaVilla').value;
+        var alamatVilla = document.getElementById('alamatVilla').value;
+        var kotaVilla = "{{ $villa->kota }}"; // ← tambah kota biar akurat
+
+        // Init map tanpa set view dulu — biar gak keliatan Jakarta
+        var map = L.map('peta-villa');
+        var marker = null;
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
-        L.marker([-6.2088, 106.8456])
-            .addTo(map)
-            .bindPopup('<b>{{ addslashes($villa->nama_villa) }}</b><br>{{ addslashes($villa->alamat) }}')
-            .openPopup();
-        setTimeout(function() {
-            map.invalidateSize();
-        }, 300);
+
+        // Query: alamat + kota = lebih akurat
+        var query = encodeURIComponent(alamatVilla + ', ' + kotaVilla + ', Indonesia');
+
+        // Step 1: Cari bounding box kota dulu
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
+                encodeURIComponent(kotaVilla + ', Indonesia') +
+                '&limit=1&countrycodes=id')
+            .then(function(res) {
+                return res.json();
+            })
+            .then(function(kotaData) {
+                if (!kotaData || kotaData.length === 0) throw new Error('Kota tidak ditemukan');
+
+                var bb = kotaData[0].boundingbox;
+                // boundingbox = [minlat, maxlat, minlon, maxlon]
+                var viewbox = bb[2] + ',' + bb[1] + ',' + bb[3] + ',' + bb[0];
+
+                // Step 2: Cari alamat DIBATASI dalam area kota
+                return fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
+                    encodeURIComponent(alamatVilla) +
+                    '&limit=1&countrycodes=id' +
+                    '&viewbox=' + viewbox +
+                    '&bounded=1');
+            })
+            .then(function(res) {
+                return res.json();
+            })
+            .then(function(data) {
+                var lat, lng;
+                if (data && data.length > 0) {
+                    lat = parseFloat(data[0].lat);
+                    lng = parseFloat(data[0].lon);
+                } else {
+                    // Fallback: pakai koordinat pusat kota aja
+                    return fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
+                            encodeURIComponent(kotaVilla + ', Indonesia') +
+                            '&limit=1&countrycodes=id')
+                        .then(function(res) {
+                            return res.json();
+                        })
+                        .then(function(d) {
+                            lat = d && d.length > 0 ? parseFloat(d[0].lat) : -6.2088;
+                            lng = d && d.length > 0 ? parseFloat(d[0].lon) : 106.8456;
+                            map.setView([lat, lng], 13);
+                            marker = L.marker([lat, lng]).addTo(map)
+                                .bindPopup('<b>' + namaVilla + '</b><br>' + alamatVilla)
+                                .openPopup();
+                            setTimeout(function() {
+                                map.invalidateSize();
+                            }, 300);
+                        });
+                }
+                map.setView([lat, lng], 15);
+                marker = L.marker([lat, lng]).addTo(map)
+                    .bindPopup('<b>' + namaVilla + '</b><br>' + alamatVilla)
+                    .openPopup();
+                setTimeout(function() {
+                    map.invalidateSize();
+                }, 300);
+            })
+            .catch(function() {
+                map.setView([-6.2088, 106.8456], 13);
+                L.marker([-6.2088, 106.8456]).addTo(map)
+                    .bindPopup('<b>' + namaVilla + '</b>').openPopup();
+            });
     });
 
+    // ===== FOTO VILLA =====
     function gantifoto(el, src) {
         document.getElementById('fotoUtama').src = src;
-        document.querySelectorAll('.foto-thumb').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.foto-thumb').forEach(function(t) {
+            t.classList.remove('active');
+        });
         el.classList.add('active');
     }
 
+    // ===== HITUNG TOTAL =====
     function hitungTotal() {
         var checkin = document.querySelector('input[name="checkin"]').value;
         var checkout = document.querySelector('input[name="checkout"]').value;
@@ -536,8 +544,27 @@
             }
         }
     }
-
     document.querySelector('input[name="checkin"]').addEventListener('change', hitungTotal);
     document.querySelector('input[name="checkout"]').addEventListener('change', hitungTotal);
+
+    // ===== RATING BINTANG =====
+    var selectedRating = parseInt(document.getElementById('selectedRatingVal')?.value || '0');
+
+    function hoverStar(n) {
+        document.querySelectorAll('#starContainer label').forEach(function(s, i) {
+            s.style.color = i < n ? '#ffc107' : '#dee2e6';
+        });
+    }
+
+    function resetStar() {
+        document.querySelectorAll('#starContainer label').forEach(function(s, i) {
+            s.style.color = i < selectedRating ? '#ffc107' : '#dee2e6';
+        });
+    }
+
+    function selectStar(n) {
+        selectedRating = n;
+        document.getElementById('star' + n).checked = true;
+    }
 </script>
 @endpush
