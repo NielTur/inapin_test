@@ -60,7 +60,7 @@ Route::prefix('owner')->name('owner.')->group(function () {
         Route::post('/akun/profil', [OwnerAkunController::class, 'updateProfil'])->name('akun.updateProfil');
 
         // Dashboard
-        Route::get('/dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/beranda', [OwnerDashboardController::class, 'index'])->name('dashboard');
 
         // Villa CRUD
         Route::get('/villa',              [OwnerVillaController::class, 'index'])->name('villa.index');

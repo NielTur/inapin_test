@@ -1,6 +1,6 @@
 @extends('owner.v_layouts.app')
 
-@section('title', 'Dashboard - Panel Owner')
+@section('title', 'Beranda Owner')
 @section('page-title', 'Dashboard')
 
 @section('content')
