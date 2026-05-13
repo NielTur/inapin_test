@@ -32,42 +32,42 @@ class VillaController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'nama_villa'  => 'required|string|max:100',
-            'deskripsi'   => 'required|string',
-            'kota'        => 'required|string|max:50',
-            'alamat'      => 'required|string',
-            'harga'       => 'required|numeric|min:0',
-            'kapasitas'   => 'required|integer|min:1',
-            'fasilitas'   => 'nullable|array',
+            'nama_villa' => 'required|string|max:100',
+            'deskripsi' => 'required|string',
+            'kota' => 'required|string|max:50',
+            'alamat' => 'required|string',
+            'harga' => 'required|numeric|min:0',
+            'kapasitas' => 'required|integer|min:1',
+            'fasilitas' => 'nullable|array',
             'fasilitas.*' => 'string|max:100',
-            'foto.*'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'foto.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ], [
             'nama_villa.required' => 'Nama villa wajib diisi.',
-            'deskripsi.required'  => 'Deskripsi wajib diisi.',
-            'kota.required'       => 'Kota wajib diisi.',
-            'alamat.required'     => 'Alamat wajib diisi.',
-            'harga.required'      => 'Harga wajib diisi.',
-            'kapasitas.required'  => 'Kapasitas wajib diisi.',
-            'foto.*.image'        => 'File harus berupa gambar.',
-            'foto.*.max'          => 'Ukuran foto maksimal 2MB.',
+            'deskripsi.required' => 'Deskripsi wajib diisi.',
+            'kota.required' => 'Kota wajib diisi.',
+            'alamat.required' => 'Alamat wajib diisi.',
+            'harga.required' => 'Harga wajib diisi.',
+            'kapasitas.required' => 'Kapasitas wajib diisi.',
+            'foto.*.image' => 'File harus berupa gambar.',
+            'foto.*.max' => 'Ukuran foto maksimal 2MB.',
         ]);
 
-        // Simpan villa
+        // Simpan villa — status default pending, menunggu persetujuan admin
         $villa = Villa::create([
-            'id_owner'   => Auth::id(),
+            'id_owner' => Auth::id(),
             'nama_villa' => $request->nama_villa,
-            'deskripsi'  => $request->deskripsi,
-            'kota'       => $request->kota,
-            'alamat'     => $request->alamat,
-            'harga'      => $request->harga,
-            'kapasitas'  => $request->kapasitas,
-            'jumlah_kamar'       => $request->jumlah_kamar,
+            'deskripsi' => $request->deskripsi,
+            'kota' => $request->kota,
+            'alamat' => $request->alamat,
+            'harga' => $request->harga,
+            'kapasitas' => $request->kapasitas,
+            'jumlah_kamar' => $request->jumlah_kamar,
             'jumlah_kamar_mandi' => $request->jumlah_kamar_mandi,
-            'whatsapp'           => $request->whatsapp,
-            'instagram'          => $request->instagram,
-            'facebook'           => $request->facebook,
-            'tiktok'             => $request->tiktok,
-            'status'     => 'aktif',
+            'whatsapp' => $request->whatsapp,
+            'instagram' => $request->instagram,
+            'facebook' => $request->facebook,
+            'tiktok' => $request->tiktok,
+            'status' => 'pending',
         ]);
 
         // Simpan fasilitas
@@ -75,7 +75,7 @@ class VillaController extends Controller
             foreach ($request->fasilitas as $fas) {
                 if (trim($fas)) {
                     FasilitasVilla::create([
-                        'id_villa'  => $villa->id_villa,
+                        'id_villa' => $villa->id_villa,
                         'fasilitas' => trim($fas),
                     ]);
                 }
@@ -87,16 +87,16 @@ class VillaController extends Controller
             foreach ($request->file('foto') as $file) {
                 $path = $file->store('foto_villa', 'public');
                 DokumenVilla::create([
-                    'id_villa'  => $villa->id_villa,
-                    'id_owner'  => Auth::id(),
+                    'id_villa' => $villa->id_villa,
+                    'id_owner' => Auth::id(),
                     'file_path' => $path,
-                    'status'    => 'disetujui',
+                    'status' => 'disetujui',
                 ]);
             }
         }
 
         return redirect()->route('owner.villa.index')
-            ->with('success', 'Villa berhasil ditambahkan!');
+            ->with('success', 'Villa berhasil ditambahkan! Menunggu persetujuan admin.');
     }
 
     public function edit($id): View
@@ -116,31 +116,31 @@ class VillaController extends Controller
             ->firstOrFail();
 
         $request->validate([
-            'nama_villa'  => 'required|string|max:100',
-            'deskripsi'   => 'required|string',
-            'kota'        => 'required|string|max:50',
-            'alamat'      => 'required|string',
-            'harga'       => 'required|numeric|min:0',
-            'kapasitas'   => 'required|integer|min:1',
-            'status'      => 'required|in:aktif,nonaktif',
-            'fasilitas'   => 'nullable|array',
-            'foto.*'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'nama_villa' => 'required|string|max:100',
+            'deskripsi' => 'required|string',
+            'kota' => 'required|string|max:50',
+            'alamat' => 'required|string',
+            'harga' => 'required|numeric|min:0',
+            'kapasitas' => 'required|integer|min:1',
+            'status' => 'required|in:pending,disetujui,ditolak,nonaktif',
+            'fasilitas' => 'nullable|array',
+            'foto.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         $villa->update([
             'nama_villa' => $request->nama_villa,
-            'deskripsi'  => $request->deskripsi,
-            'kota'       => $request->kota,
-            'alamat'     => $request->alamat,
-            'harga'      => $request->harga,
-            'kapasitas'  => $request->kapasitas,
-            'jumlah_kamar'       => $request->jumlah_kamar,
+            'deskripsi' => $request->deskripsi,
+            'kota' => $request->kota,
+            'alamat' => $request->alamat,
+            'harga' => $request->harga,
+            'kapasitas' => $request->kapasitas,
+            'jumlah_kamar' => $request->jumlah_kamar,
             'jumlah_kamar_mandi' => $request->jumlah_kamar_mandi,
-            'whatsapp'           => $request->whatsapp,
-            'instagram'          => $request->instagram,
-            'facebook'           => $request->facebook,
-            'tiktok'             => $request->tiktok,
-            'status'     => $request->status,
+            'whatsapp' => $request->whatsapp,
+            'instagram' => $request->instagram,
+            'facebook' => $request->facebook,
+            'tiktok' => $request->tiktok,
+            'status' => $request->status,
         ]);
 
         // Update fasilitas — hapus lama, insert baru
@@ -149,7 +149,7 @@ class VillaController extends Controller
             foreach ($request->fasilitas as $fas) {
                 if (trim($fas)) {
                     FasilitasVilla::create([
-                        'id_villa'  => $villa->id_villa,
+                        'id_villa' => $villa->id_villa,
                         'fasilitas' => trim($fas),
                     ]);
                 }
@@ -161,10 +161,10 @@ class VillaController extends Controller
             foreach ($request->file('foto') as $file) {
                 $path = $file->store('foto_villa', 'public');
                 DokumenVilla::create([
-                    'id_villa'  => $villa->id_villa,
-                    'id_owner'  => Auth::id(),
+                    'id_villa' => $villa->id_villa,
+                    'id_owner' => Auth::id(),
                     'file_path' => $path,
-                    'status'    => 'disetujui',
+                    'status' => 'disetujui',
                 ]);
             }
         }

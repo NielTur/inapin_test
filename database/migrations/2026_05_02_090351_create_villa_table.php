@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         // ===== TABEL VILLA =====
@@ -19,7 +18,7 @@ return new class extends Migration
             $table->integer('kapasitas');
             $table->integer('jumlah_kamar')->default(1);
             $table->integer('jumlah_kamar_mandi')->default(1);
-            $table->enum('status', ['aktif', 'nonaktif', 'pending'])->default('aktif');
+            $table->enum('status', ['pending', 'disetujui', 'ditolak', 'nonaktif'])->default('pending');
             $table->decimal('ulasan', 3, 1)->nullable();
             $table->text('alamat');
             $table->string('whatsapp')->nullable();

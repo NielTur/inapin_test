@@ -1,221 +1,157 @@
 <!DOCTYPE html>
-<html dir="ltr" lang="id">
+<html lang="id">
 
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('frontend/img/favicon.ico') }}">
     <title>@yield('title', 'Panel Admin - VillaKu')</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- CSS Backend (dari TokoOnline) -->
-    <link rel="stylesheet" type="text/css" href="{{ asset('backend/extra-libs/multicheck/multicheck.css') }}">
-    <link href="{{ asset('backend/libs/datatables.net-bs4/css/dataTables.bootstrap4.css') }}" rel="stylesheet">
-    <link href="{{ asset('backend/dist/css/style.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('frontend/img/favicon.ico') }}" rel="icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Inter:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ asset('frontend/lib/animate/animate.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('frontend/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('frontend/css/style.css') }}" rel="stylesheet">
+
+    <style>
+        body { background: #f8f9fa; }
+        #sidebar {
+            width: 260px; min-height: 100vh; background: #fff;
+            border-right: 1px solid #e9ecef; position: fixed;
+            top: 0; left: 0; z-index: 100; transition: all .3s; overflow-y: auto;
+        }
+        #sidebar .sidebar-brand { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e9ecef; }
+        #sidebar .nav-link {
+            color: #6c757d; padding: .6rem 1.5rem; border-radius: 8px;
+            margin: 2px 8px; font-size: .9rem; display: flex;
+            align-items: center; gap: 10px; transition: all .2s;
+        }
+        #sidebar .nav-link:hover, #sidebar .nav-link.active { background: #3bd63e5c; color: #1e7d1f; }
+        #sidebar .nav-link i { width: 18px; text-align: center; }
+        #sidebar .nav-section {
+            font-size: 11px; text-transform: uppercase; letter-spacing: .8px;
+            color: #adb5bd; padding: .75rem 1.5rem .25rem; font-weight: 600;
+        }
+        #main-content { margin-left: 260px; min-height: 100vh; transition: all .3s; }
+        #topbar {
+            background: #fff; border-bottom: 1px solid #e9ecef;
+            padding: .75rem 1.5rem; position: sticky; top: 0; z-index: 99;
+        }
+        @media (max-width: 991px) {
+            #sidebar { transform: translateX(-100%); }
+            #sidebar.show { transform: translateX(0); }
+            #main-content { margin-left: 0; }
+        }
+    </style>
+    @stack('styles')
 </head>
 
 <body>
-    <!-- Preloader -->
-    <div class="preloader">
-        <div class="lds-ripple">
-            <div class="lds-pos"></div>
-            <div class="lds-pos"></div>
+
+    <div id="sidebar">
+        <div class="sidebar-brand d-flex align-items-center gap-2">
+            <img src="{{ asset('frontend/img/icon-deal.png') }}" alt="" style="width:28px;">
+            <div>
+                <h6 class="mb-0 fw-bold text-danger">VillaKu</h6>
+                <small class="text-muted" style="font-size:11px;">Panel Admin</small>
+            </div>
+        </div>
+
+        <div class="p-3 border-bottom">
+            <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                    style="width:38px; height:38px; font-size:15px;">
+                    {{ strtoupper(substr(Auth::guard('admin')->user()->nama ?? 'A', 0, 1)) }}
+                </div>
+                <div class="overflow-hidden">
+                    <p class="mb-0 fw-semibold text-truncate" style="font-size:13px;">
+                        {{ Auth::guard('admin')->user()->nama ?? 'Admin' }}
+                    </p>
+                    <p class="mb-0 text-muted text-truncate" style="font-size:11px;">
+                        {{ Auth::guard('admin')->user()->email ?? '' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="py-2">
+            <span class="nav-section">Menu Utama</span>
+            <a href="{{ route('admin.beranda') }}"
+                class="nav-link {{ request()->routeIs('admin.beranda') ? 'active' : '' }}">
+                <i class="fa fa-tachometer-alt"></i> Dashboard
+            </a>
+
+            <span class="nav-section">Manajemen Villa</span>
+            @php $villaPending = \App\Models\Villa::where('status','pending')->count(); @endphp
+            <a href="{{ route('admin.villa.index') }}"
+                class="nav-link {{ request()->routeIs('admin.villa.*') ? 'active' : '' }}">
+                <i class="fa fa-home"></i> Data Villa
+                @if($villaPending > 0)
+                    <span class="badge bg-danger ms-auto">{{ $villaPending }}</span>
+                @endif
+            </a>
+
+            <span class="nav-section">Manajemen Pengguna</span>
+            <a href="{{ route('admin.customer.index') }}"
+                class="nav-link {{ request()->routeIs('admin.customer.*') ? 'active' : '' }}">
+                <i class="fa fa-users"></i> Data Tamu
+            </a>
+            <a href="{{ route('admin.owner.index') }}"
+                class="nav-link {{ request()->routeIs('admin.owner.*') ? 'active' : '' }}">
+                <i class="fa fa-user-tie"></i> Data Owner
+            </a>
+
+            <span class="nav-section">Transaksi</span>
+            <a href="{{ route('admin.pesanan.index') }}"
+                class="nav-link {{ request()->routeIs('admin.pesanan.*') ? 'active' : '' }}">
+                <i class="fa fa-clipboard-list"></i> Semua Pesanan
+            </a>
+
+            <span class="nav-section">Akun</span>
+            <a href="{{ route('beranda') }}" class="nav-link" target="_blank">
+                <i class="fa fa-external-link-alt"></i> Lihat Website
+            </a>
+            <form action="{{ route('admin.logout') }}" method="POST" class="m-0">
+                @csrf
+                <button type="submit" class="nav-link border-0 bg-transparent w-100 text-start text-danger">
+                    <i class="fa fa-sign-out-alt"></i> Keluar
+                </button>
+            </form>
+        </nav>
+    </div>
+
+    <div id="main-content">
+        <div id="topbar" class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-sm btn-outline-secondary d-lg-none border-0"
+                    onclick="document.getElementById('sidebar').classList.toggle('show')">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <h6 class="mb-0 fw-bold">@yield('page-title', 'Dashboard')</h6>
+            </div>
+            <span class="text-muted small d-none d-md-inline">{{ now()->format('d M Y') }}</span>
+        </div>
+
+        @if(session('success') || session('error') || session('warning'))
+        <div class="px-4 pt-3">
+            @include('frontend.v_components.alert')
+        </div>
+        @endif
+
+        <div class="p-4">
+            @yield('content')
         </div>
     </div>
 
-    <div id="main-wrapper">
-
-        <!-- ===== TOPBAR ===== -->
-        <header class="topbar" data-navbarbg="skin5">
-            <nav class="navbar top-navbar navbar-expand-md navbar-dark">
-                <div class="navbar-header" data-logobg="skin5">
-                    <a class="nav-toggler waves-effect waves-light d-block d-md-none" href="javascript:void(0)">
-                        <i class="ti-menu ti-close"></i>
-                    </a>
-                    <a class="navbar-brand" href="{{ route('admin.beranda') }}">
-                        <b class="logo-icon p-l-10">
-                            <img src="{{ asset('frontend/img/icon-deal.png') }}" alt="VillaKu" class="light-logo" style="width:30px;">
-                        </b>
-                        <span class="logo-text" style="color:#fff; font-size:1.1rem; font-weight:700;">
-                            VillaKu
-                        </span>
-                    </a>
-                    <a class="topbartoggler d-block d-md-none waves-effect waves-light" href="javascript:void(0)"
-                        data-toggle="collapse" data-target="#navbarSupportedContent">
-                        <i class="ti-more"></i>
-                    </a>
-                </div>
-
-                <div class="navbar-collapse collapse" id="navbarSupportedContent" data-navbarbg="skin5">
-                    <ul class="navbar-nav float-left mr-auto">
-                        <li class="nav-item d-none d-md-block">
-                            <a class="nav-link sidebartoggler waves-effect waves-light" href="javascript:void(0)"
-                                data-sidebartype="mini-sidebar">
-                                <i class="mdi mdi-menu font-24"></i>
-                            </a>
-                        </li>
-                    </ul>
-
-                    <ul class="navbar-nav float-right">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-muted waves-effect waves-dark pro-pic" href=""
-                                data-toggle="dropdown">
-                                <img src="{{ asset('frontend/img/icon-deal.png') }}" alt="admin"
-                                    class="rounded-circle" width="31">
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right user-dd animated">
-                                <div class="p-l-20 p-b-10">
-                                    <p class="m-b-0 font-medium">{{ Auth::user()->nama ?? 'Admin' }}</p>
-                                    <small class="text-muted">Super Admin</small>
-                                </div>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ route('beranda') }}" target="_blank">
-                                    <i class="ti-home m-r-5 m-l-5"></i> Lihat Website
-                                </a>
-                                <a class="dropdown-item" href=""
-                                    onclick="event.preventDefault(); document.getElementById('keluar-admin').submit();">
-                                    <i class="fa fa-power-off m-r-5 m-l-5"></i> Keluar
-                                </a>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-        </header>
-
-        <!-- ===== SIDEBAR ===== -->
-        <aside class="left-sidebar" data-sidebarbg="skin5">
-            <div class="scroll-sidebar">
-                <nav class="sidebar-nav">
-                    <ul id="sidebarnav" class="p-t-30">
-
-                        <li class="sidebar-item">
-                            <a class="sidebar-link waves-effect waves-dark"
-                                href="{{ route('admin.beranda') }}" aria-expanded="false">
-                                <i class="mdi mdi-view-dashboard"></i>
-                                <span class="hide-menu">Dashboard</span>
-                            </a>
-                        </li>
-
-                        <li class="nav-small-cap"><span class="hide-menu">MANAJEMEN USER</span></li>
-
-                        <li class="sidebar-item">
-                            <a class="sidebar-link waves-effect waves-dark"
-                                href="{{ route('admin.customer.index') }}" aria-expanded="false">
-                                <i class="mdi mdi-account-multiple"></i>
-                                <span class="hide-menu">Data Tamu</span>
-                            </a>
-                        </li>
-
-                        <li class="sidebar-item">
-                            <a class="sidebar-link waves-effect waves-dark"
-                                href="{{ route('admin.owner.index') }}" aria-expanded="false">
-                                <i class="mdi mdi-account-key"></i>
-                                <span class="hide-menu">Data Owner</span>
-                            </a>
-                        </li>
-
-                        <li class="nav-small-cap"><span class="hide-menu">PROPERTI</span></li>
-
-                        <li class="sidebar-item">
-                            <a class="sidebar-link waves-effect waves-dark"
-                                href="{{ route('admin.villa.index') }}" aria-expanded="false">
-                                <i class="mdi mdi-home-city"></i>
-                                <span class="hide-menu">Data Villa</span>
-                            </a>
-                        </li>
-
-                        <li class="nav-small-cap"><span class="hide-menu">TRANSAKSI</span></li>
-
-                        <li class="sidebar-item">
-                            <a class="sidebar-link waves-effect waves-dark"
-                                href="{{ route('admin.pesanan.index') }}" aria-expanded="false">
-                                <i class="mdi mdi-receipt"></i>
-                                <span class="hide-menu">Semua Pesanan</span>
-                            </a>
-                        </li>
-
-                    </ul>
-                </nav>
-            </div>
-        </aside>
-
-        <!-- ===== PAGE WRAPPER ===== -->
-        <div class="page-wrapper">
-            <div class="container-fluid">
-                @yield('content')
-            </div>
-
-            <footer class="footer text-center">
-                VillaKu &copy; {{ date('Y') }} — Panel Super Admin
-            </footer>
-        </div>
-
-    </div>
-
-    <!-- Form Logout -->
-    <form id="keluar-admin" action="{{ route('logout') }}" method="POST" class="d-none">
-        @csrf
-    </form>
-
-    <!-- JS -->
-    <script src="{{ asset('backend/libs/jquery/dist/jquery.min.js') }}"></script>
-    <script src="{{ asset('backend/libs/popper.js/dist/umd/popper.min.js') }}"></script>
-    <script src="{{ asset('backend/libs/bootstrap/dist/js/bootstrap.min.js') }}"></script>
-    <script src="{{ asset('backend/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js') }}"></script>
-    <script src="{{ asset('backend/extra-libs/sparkline/sparkline.js') }}"></script>
-    <script src="{{ asset('backend/dist/js/waves.js') }}"></script>
-    <script src="{{ asset('backend/dist/js/sidebarmenu.js') }}"></script>
-    <script src="{{ asset('backend/dist/js/custom.min.js') }}"></script>
-    <script src="{{ asset('backend/extra-libs/multicheck/datatable-checkbox-init.js') }}"></script>
-    <script src="{{ asset('backend/extra-libs/multicheck/jquery.multicheck.js') }}"></script>
-    <script src="{{ asset('backend/extra-libs/DataTables/datatables.min.js') }}"></script>
-    <script src="{{ asset('sweetalert/sweetalert2.all.min.js') }}"></script>
-
-    <script>
-        // DataTables
-        if ($('#zero_config').length) $('#zero_config').DataTable();
-
-        // SweetAlert success
-        @if(session('success'))
-        Swal.fire({
-            icon: 'success',
-            title: 'Berhasil!',
-            text: "{{ session('success') }}"
-        });
-        @endif
-
-        @if(session('error'))
-        Swal.fire({
-            icon: 'error',
-            title: 'Gagal!',
-            text: "{{ session('error') }}"
-        });
-        @endif
-
-        // Konfirmasi hapus
-        $('.show_confirm').click(function(event) {
-            var form = $(this).closest("form");
-            var nama = $(this).data("konf-delete");
-            event.preventDefault();
-            Swal.fire({
-                title: 'Konfirmasi Hapus?',
-                html: "Data <strong>" + nama + "</strong> tidak dapat dikembalikan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, hapus!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) form.submit();
-            });
-        });
-    </script>
-
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('frontend/lib/wow/wow.min.js') }}"></script>
+    <script src="{{ asset('frontend/js/main.js') }}"></script>
     @stack('scripts')
 
 </body>
-
 </html>

@@ -11,7 +11,7 @@ class VillaController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Villa::where('status', 'aktif')
+        $query = Villa::where('status', 'disetujui')
             ->with(['fasilitasVilla', 'dokumenVilla', 'owner']);
 
         // Filter: Keyword / Nama Villa
@@ -42,6 +42,7 @@ class VillaController extends Controller
         if ($request->filled('rating')) {
             $query->where('ulasan', '>=', $request->rating);
         }
+
         // Filter: Jumlah Kamar
         if ($request->filled('kamar')) {
             $query->where('jumlah_kamar', '>=', $request->kamar);
@@ -50,24 +51,25 @@ class VillaController extends Controller
         // Sorting
         $sort = $request->get('sort', 'terbaru');
         match ($sort) {
-            'harga_asc'  => $query->orderBy('harga', 'asc'),
+            'harga_asc' => $query->orderBy('harga', 'asc'),
             'harga_desc' => $query->orderBy('harga', 'desc'),
-            'rating'     => $query->orderByDesc('ulasan'),
-            default      => $query->latest(),
+            'rating' => $query->orderByDesc('ulasan'),
+            default => $query->latest(),
         };
 
         $villas = $query->paginate(9)->withQueryString();
 
         // Data untuk filter sidebar
-        $kotaList = Villa::where('status', 'aktif')
+        $kotaList = Villa::where('status', 'disetujui')
             ->selectRaw('kota, COUNT(*) as total')
             ->groupBy('kota')
             ->orderByDesc('total')
             ->pluck('kota')
             ->take(5);
-        $hargaMin   = Villa::where('status', 'aktif')->min('harga') ?? 0;
-        $hargaMax   = Villa::where('status', 'aktif')->max('harga') ?? 10000000;
-        $totalVilla = Villa::where('status', 'aktif')->count();
+
+        $hargaMin = Villa::where('status', 'disetujui')->min('harga') ?? 0;
+        $hargaMax = Villa::where('status', 'disetujui')->max('harga') ?? 10000000;
+        $totalVilla = Villa::where('status', 'disetujui')->count();
 
         return view('frontend.v_villa.index', compact(
             'villas',
@@ -82,7 +84,7 @@ class VillaController extends Controller
     public function detail($id): View
     {
         $villa = Villa::where('id_villa', $id)
-            ->where('status', 'aktif')
+            ->where('status', 'disetujui')
             ->with(['fasilitasVilla', 'dokumenVilla'])
             ->firstOrFail();
 
