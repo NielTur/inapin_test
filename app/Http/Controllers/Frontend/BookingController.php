@@ -33,16 +33,17 @@ class BookingController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'id_villa' => 'required|exists:villa,id_villa',
-            'tanggal_checkin' => 'required|date|after_or_equal:today',
-            'tanggal_checkout' => 'required|date|after:tanggal_checkin',
-            'metode_pembayaran' => 'required|string',
-        ], [
-            'tanggal_checkin.after_or_equal' => 'Tanggal check-in tidak boleh sebelum hari ini.',
-            'tanggal_checkout.after' => 'Tanggal check-out harus setelah check-in.',
-            'metode_pembayaran.required' => 'Pilih metode pembayaran.',
-        ]);
+        $request->validate(
+            [
+                'id_villa' => 'required|exists:villa,id_villa',
+                'tanggal_checkin' => 'required|date|after_or_equal:today',
+                'tanggal_checkout' => 'required|date|after:tanggal_checkin',
+            ],
+            [
+                'tanggal_checkin.after_or_equal' => 'Tanggal check-in tidak boleh sebelum hari ini.',
+                'tanggal_checkout.after' => 'Tanggal check-out harus setelah check-in.',
+            ]
+        );
 
         $villa = Villa::findOrFail($request->id_villa);
         $malam = (int) ((strtotime($request->tanggal_checkout) - strtotime($request->tanggal_checkin)) / 86400);
@@ -51,12 +52,11 @@ class BookingController extends Controller
         $pemesanan = Pemesanan::create([
             'id_villa' => $villa->id_villa,
             'id_customer' => Auth::id(),
-            'metode_pembayaran' => $request->metode_pembayaran,
+            'metode_pembayaran' => 'midtrans',
             'tanggal_pemesanan' => now(),
             'expires_at' => now()->addMinutes(config('app.booking_payment_timeout', 30)),
         ]);
 
-        // Villa tidak tersedia selama proses pembayaran
         $villa->update(['tersedia' => false]);
 
         DetailPemesanan::create([
