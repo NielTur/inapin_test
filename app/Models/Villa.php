@@ -19,6 +19,8 @@ class Villa extends Model
         'kelurahan',
         'kecamatan',
         'provinsi',
+        'latitude',
+        'longitude',
         'harga',
         'kapasitas',
         'jumlah_kamar',

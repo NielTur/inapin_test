@@ -17,6 +17,8 @@ return new class extends Migration {
             $table->string('kelurahan')->nullable();
             $table->string('kecamatan')->nullable();
             $table->string('provinsi')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
             $table->decimal('harga', 15, 2);
             $table->integer('kapasitas');
             $table->integer('jumlah_kamar')->default(1);

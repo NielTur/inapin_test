@@ -86,6 +86,39 @@
                             @enderror
                         </div>
 
+                        {{-- Map Picker --}}
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Pin Lokasi Villa</label>
+                            <div class="alert alert-info py-2 small mb-2">
+                                <i class="fa fa-info-circle me-1"></i>
+                                Ketik alamat villa lalu klik <strong>Cari</strong> — pin akan otomatis muncul. Bisa digeser jika kurang tepat.
+                            </div>
+
+                            {{-- Search box --}}
+                            <div class="input-group mb-2">
+                                <input type="text" id="searchAlamat" class="form-control">
+                                <button type="button" class="btn btn-primary" id="btnCariLokasi">
+                                    <i class="fa fa-search me-1"></i> Cari
+                                </button>
+                            </div>
+
+                            {{-- Koordinat & Reset --}}
+                            <div class="d-flex gap-2 mb-2">
+                                <input type="text" id="displayKoordinat" class="form-control form-control-sm bg-light"
+                                placeholder="Koordinat otomatis terisi setelah pin ditentukan" readonly>
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="btnResetPin">
+                                    <i class="fa fa-times"></i> Reset
+                                </button>
+                            </div>
+                            
+                            <input type="hidden" name="latitude"  id="inputLatitude"  value="{{ old('latitude',  $villa->latitude) }}">
+                            <input type="hidden" name="longitude" id="inputLongitude" value="{{ old('longitude', $villa->longitude) }}">
+
+                            <div id="mapPicker" style="height:350px; width:100%; border-radius:8px; border:1px solid #dee2e6;">
+
+                            </div>
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Kapasitas Tamu <span class="text-danger">*</span></label>
                             <input type="number" name="kapasitas"
@@ -97,7 +130,7 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Status Villa</label>
+                            <label class=" form-label fw-semibold">Status Villa</label>
                             @if($villa->status === 'disetujui')
                                 <div class="form-control bg-light d-flex align-items-center gap-2">
                                     <span class="badge bg-success">Aktif</span>
@@ -108,7 +141,7 @@
                             @else
                                 <select name="status" class="form-select">
                                     <option value="aktif" {{ $villa->status === 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                    <option value="nonaktif" {{ $villa->status === 'nonaktif' ? 'selected' : '' }}>Nonaktif
+                                    <option value=" nonaktif" {{ $villa->status === 'nonaktif' ? 'selected' : '' }}>Nonaktif
                                     </option>
                                 </select>
                             @endif
@@ -117,8 +150,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Harga per Malam (Rp) <span
                                     class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text">Rp</span>
+                            <div class="input-group"> <span class="input-group-text">Rp</span>
                                 <input type="number" name="harga" class="form-control @error('harga') is-invalid @enderror"
                                     value="{{ old('harga', $villa->harga) }}" min="0" required>
                             </div>
@@ -133,14 +165,15 @@
                                 class="form-control @error('jumlah_kamar') is-invalid @enderror"
                                 value="{{ old('jumlah_kamar', $villa->jumlah_kamar ?? 1) }}" min="1" required>
                             @error('jumlah_kamar')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}
+                                </div>
                             @enderror
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Jumlah Kamar Mandi <span
                                     class="text-danger">*</span></label>
-                            <input type="number" name="jumlah_kamar_mandi"
+                            <input type=" number" name="jumlah_kamar_mandi"
                                 class="form-control @error('jumlah_kamar_mandi') is-invalid @enderror"
                                 value="{{ old('jumlah_kamar_mandi', $villa->jumlah_kamar_mandi ?? 1) }}" min="1" required>
                             @error('jumlah_kamar_mandi')
@@ -201,7 +234,7 @@
                         <i class="fa fa-share-alt text-primary me-2"></i> Sosial Media & Kontak
                         <small class="text-muted fw-normal ms-2">(opsional)</small>
                     </h6>
-                    <div class="row g-3">
+                    <div class=" row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Instagram</label>
                             <div class="input-group">
@@ -265,6 +298,7 @@
         <div class="col-lg-4">
             <div class="bg-light rounded p-4 wow fadeInUp" data-wow-delay="0.1s">
                 <h6 class="fw-bold mb-3">Info Villa</h6>
+
                 <p class="small text-muted mb-2">
                     <i class="fa fa-calendar text-primary me-2"></i>
                     Dibuat: {{ $villa->created_at->format('d M Y') }}
@@ -290,43 +324,164 @@
 @endsection
 
 @push('scripts')
-    <script>
-        document.getElementById('btnTambahFasilitas').addEventListener('click', function () {
-            var container = document.getElementById('fasilitasContainer');
-            var div = document.createElement('div');
-            div.className = 'input-group mb-2 fasilitas-item';
-            div.innerHTML = `
-                <span class="input-group-text bg-light border-end-0">
-                    <i class="fa fa-check text-primary"></i>
-                </span>
-                <input type="text" name="fasilitas[]" class="form-control border-start-0" placeholder="Nama fasilitas">
-                <button type="button" class="btn btn-outline-danger btn-hapus-fasilitas">
-                    <i class="fa fa-times"></i>
-                </button>
-            `;
-            container.appendChild(div);
-        });
+<script>
+    // ===== FASILITAS =====
+    document.getElementById('btnTambahFasilitas').addEventListener('click', function() {
+        var container = document.getElementById('fasilitasContainer');
+        var div = document.createElement('div');
+        div.className = 'input-group mb-2 fasilitas-item';
+        div.innerHTML = `
+            <span class="input-group-text bg-light border-end-0">
+                <i class="fa fa-check text-primary"></i>
+            </span>
+            <input type="text" name="fasilitas[]" class="form-control border-start-0" placeholder="Nama fasilitas">
+            <button type="button" class="btn btn-outline-danger btn-hapus-fasilitas">
+                <i class="fa fa-times"></i>
+            </button>
+        `;
+        container.appendChild(div);
+    });
 
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.btn-hapus-fasilitas')) {
-                e.target.closest('.fasilitas-item').remove();
-            }
-        });
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-hapus-fasilitas')) {
+            e.target.closest('.fasilitas-item').remove();
+        }
+    });
 
-        function previewFotoVilla(input) {
-            var container = document.getElementById('previewFotoContainer');
-            container.innerHTML = '';
-            Array.from(input.files).forEach(function (file) {
+    // ===== PREVIEW FOTO =====
+    function previewFotoVilla(input) {
+        var container = document.getElementById('previewFotoContainer');
+        container.innerHTML = '';
+        if (input.files) {
+            Array.from(input.files).forEach(function(file) {
                 var reader = new FileReader();
-                reader.onload = function (e) {
+                reader.onload = function(e) {
                     var img = document.createElement('img');
                     img.src = e.target.result;
                     img.className = 'rounded border';
                     img.style = 'width:100px; height:75px; object-fit:cover;';
                     container.appendChild(img);
-                }
+                };
                 reader.readAsDataURL(file);
             });
         }
-    </script>
+    }
+</script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    // ===== MAP PICKER =====
+    document.addEventListener('DOMContentLoaded', function() {
+        var mapPicker = L.map('mapPicker').setView([-6.2088, 106.8456], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19,
+        }).addTo(mapPicker);
+
+        var pinMarker = null;
+        // Pre-fill marker kalau sudah ada koordinat
+        var savedLat = parseFloat(document.getElementById('inputLatitude').value)  || 0;
+        var savedLng = parseFloat(document.getElementById('inputLongitude').value) || 0;
+        if (savedLat && savedLng) {
+            setPin(savedLat, savedLng, 15);
+        }
+
+        function setPin(lat, lng, zoom) {
+            if (pinMarker) mapPicker.removeLayer(pinMarker);
+            pinMarker = L.marker([lat, lng], { draggable: true }).addTo(mapPicker);
+            mapPicker.setView([lat, lng], zoom || 16);
+            document.getElementById('inputLatitude').value  = lat.toFixed(8);
+            document.getElementById('inputLongitude').value = lng.toFixed(8);
+            document.getElementById('displayKoordinat').value = lat.toFixed(6) + ', ' + lng.toFixed(6);
+
+            pinMarker.on('dragend', function(e) {
+                var pos = e.target.getLatLng();
+                setPin(pos.lat, pos.lng, mapPicker.getZoom());
+            });
+        }
+
+        // Klik peta langsung set pin
+        mapPicker.on('click', function(e) {
+            setPin(e.latlng.lat, e.latlng.lng, 16);
+        });
+        
+        // Tombol Cari
+        function cariLokasi() {
+            var query = document.getElementById('searchAlamat').value.trim();
+            if (!query) return;
+
+            var btnCari = document.getElementById('btnCariLokasi');
+            btnCari.innerHTML = '<i class="fa fa-spinner fa-spin me-1"></i> Mencari...';
+            btnCari.disabled = true;
+
+            var parts = query.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+
+            // Bangun queries dari paling spesifik, tapi SELALU sertakan kota (bagian terakhir)
+            var queries = [];
+            queries.push(query + ', Indonesia'); // full query
+
+            // Potong dari depan satu per satu, tapi kota tetap ada
+            for (var i = 1; i < parts.length - 1; i++) {
+                queries.push(parts.slice(i).join(', ') + ', Indonesia');
+            }
+
+            // Fallback minimum: kota + provinsi saja (2 bagian terakhir)
+            if (parts.length >= 2) {
+                queries.push(parts.slice(-2).join(', ') + ', Indonesia');
+            }
+
+            // Fallback absolut: bagian terakhir saja (kota/provinsi)
+            queries.push(parts[parts.length - 1] + ', Indonesia');
+
+            function tryQuery(index) {
+                if (index >= queries.length) {
+                    alert('Lokasi tidak ditemukan.\nCoba ketik nama kecamatan atau kota saja.\nContoh: "Medan Satria, Bekasi"');
+                    btnCari.innerHTML = '<i class="fa fa-search me-1"></i> Cari';
+                    btnCari.disabled = false;
+                    return;
+                }
+                fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=' +
+                    encodeURIComponent(queries[index]),
+                    { headers: { 'Accept-Language': 'id,en' } })
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (data && data.length > 0) {
+                            setPin(parseFloat(data[0].lat), parseFloat(data[0].lon), 15);
+                            btnCari.innerHTML = '<i class="fa fa-search me-1"></i> Cari';
+                            btnCari.disabled = false;
+                        } else {
+                            tryQuery(index + 1);
+                        }
+                    })
+                    .catch(function() { tryQuery(index + 1); });
+            }
+
+            tryQuery(0);
+        }
+
+        document.getElementById('btnCariLokasi').addEventListener('click', cariLokasi);
+
+        document.getElementById('searchAlamat').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                cariLokasi();
+            }
+        });
+
+        document.getElementById('btnResetPin').addEventListener('click', function() {
+            if (pinMarker) mapPicker.removeLayer(pinMarker);
+            pinMarker = null;
+            document.getElementById('inputLatitude').value  = '';
+            document.getElementById('inputLongitude').value = '';
+            document.getElementById('displayKoordinat').value = '';
+            document.getElementById('searchAlamat').value = '';
+            mapPicker.setView([-6.2088, 106.8456], 5);
+        });
+
+        setTimeout(function() { mapPicker.invalidateSize(); }, 300);
+    });
+</script>
 @endpush

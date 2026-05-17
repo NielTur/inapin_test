@@ -57,7 +57,12 @@
     <div class="container">
         <h1 class="fw-bold mb-2">{{ $villa->nama_villa }}</h1>
         <p class="text-muted mb-2">
-            <i class="fa fa-map-marker-alt text-primary me-2"></i>{{ $villa->alamat }}
+            <i class="fa fa-map-marker-alt text-primary me-2"></i>
+            @php
+            $alamatLengkap = collect([$villa->alamat, $villa->kelurahan, $villa->kecamatan, $villa->kota, $villa->provinsi])
+            ->filter()->implode(', ');
+            @endphp
+            {{ $alamatLengkap }}
         </p>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb text-uppercase mb-0">
@@ -340,8 +345,9 @@
                     {{-- Peta --}}
                     <div class="mb-5 wow fadeInUp" data-wow-delay="0.3s">
                         <h4 class="fw-bold mb-4">Lokasi Villa</h4>
+                        {{-- Di bagian Peta --}}
                         <p class="text-muted mb-3">
-                            <i class="fa fa-map-marker-alt text-primary me-2"></i>{{ $villa->alamat }}
+                            <i class="fa fa-map-marker-alt text-primary me-2"></i>{{ $alamatLengkap }}
                         </p>
                         <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($villa->alamat . ', ' . $villa->kota) }}"
                             target="_blank" class="btn btn-outline-primary btn-sm mb-3">
@@ -357,9 +363,15 @@
             <div class="col-lg-4">
 
                 {{-- Hidden inputs untuk JS --}}
-                <input type="hidden" id="namaVilla" value="{{ $villa->nama_villa }}">
-                <input type="hidden" id="alamatVilla" value="{{ $villa->alamat }}">
-                <input type="hidden" id="hargaVilla" value="{{ (int) $villa->harga }}">
+                <input type="hidden" id="namaVilla"   value="{{ $villa->nama_villa }}">
+                <input type="hidden" id="alamatVilla" value="{{ $alamatLengkap }}">
+                <input type="hidden" id="hargaVilla"  value="{{ (int) $villa->harga }}">
+                <input type="hidden" id="kotaVilla"   value="{{ $villa->kota }}">
+                <input type="hidden" id="kelurahan"   value="{{ $villa->kelurahan ?? '' }}">
+                <input type="hidden" id="kecamatan"   value="{{ $villa->kecamatan ?? '' }}">
+                <input type="hidden" id="provinsi"    value="{{ $villa->provinsi ?? '' }}">
+                <input type="hidden" id="villaLat"    value="{{ $villa->latitude ?? '' }}">
+                <input type="hidden" id="villaLng"    value="{{ $villa->longitude ?? '' }}">
 
                 <div class="bg-light rounded p-4 mb-4 wow fadeInUp sticky-top" data-wow-delay="0.1s" style="top:80px;">
 
@@ -441,12 +453,14 @@
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+
     // ===== PETA LEAFLET =====
-    document.addEventListener('DOMContentLoaded', function () {
     var namaVilla   = document.getElementById('namaVilla').value;
     var alamatVilla = document.getElementById('alamatVilla').value;
-    var kotaVilla   = "{{ $villa->kota }}";
-    var popupText   = '<b>' + namaVilla + '</b><br><small>' + alamatVilla + '</small>';
+    var kotaVilla   = document.getElementById('kotaVilla').value;
+    var villaLat    = parseFloat(document.getElementById('villaLat').value);
+    var villaLng    = parseFloat(document.getElementById('villaLng').value);
 
     var map = L.map('peta-villa').setView([-6.2088, 106.8456], 5);
     var marker = null;
@@ -456,7 +470,6 @@
         maxZoom: 19,
     }).addTo(map);
 
-    // Loading overlay
     var petaEl = document.getElementById('peta-villa');
     petaEl.style.position = 'relative';
     var loadingDiv = document.createElement('div');
@@ -474,67 +487,59 @@
         map.setView([lat, lng], zoom);
         if (marker) map.removeLayer(marker);
         marker = L.marker([lat, lng]).addTo(map)
-            .bindPopup(popupText)
+            .bindPopup('<b>' + namaVilla + '</b><br><small>' + alamatVilla + '</small>')
             .openPopup();
-        setTimeout(function () { map.invalidateSize(); }, 300);
+        setTimeout(function() { map.invalidateSize(); }, 300);
         removeLoading();
     }
 
-    // ─── GANTI BAGIAN INI (hapus queries lama, paste yang baru) ───
-    var kelurahan = "{{ $villa->kelurahan ?? '' }}";
-    var kecamatan = "{{ $villa->kecamatan ?? '' }}";
-    var provinsi  = "{{ $villa->provinsi ?? '' }}";
-
-    var queries = [];
-
-    var q1parts = [alamatVilla, kelurahan, kecamatan, kotaVilla, provinsi, 'Indonesia']
-        .filter(function(s) { return s.trim() !== ''; });
-    queries.push({ q: q1parts.join(', '), zoom: 17 });
-
-    var q2parts = [kecamatan, kotaVilla, provinsi, 'Indonesia']
-        .filter(function(s) { return s.trim() !== ''; });
-    if (q2parts.length > 2) queries.push({ q: q2parts.join(', '), zoom: 14 });
-
-    var q3parts = [kotaVilla, provinsi, 'Indonesia']
-        .filter(function(s) { return s.trim() !== ''; });
-    queries.push({ q: q3parts.join(', '), zoom: 12 });
-
-    function nominatim(query) {
-        return fetch(
-            'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=id&q=' +
-            encodeURIComponent(query),
-            { headers: { 'Accept-Language': 'id,en' } }
-        ).then(function(r) { return r.json(); });
-    }
-
-    function tryNext(index) {
-        if (index >= queries.length) {
-            setMarker(-6.2088, 106.8456, 10);
-            return;
-        }
-        nominatim(queries[index].q)
+    if (villaLat && villaLng) {
+        setMarker(villaLat, villaLng, 16);
+    } else {
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
+                encodeURIComponent(kotaVilla + ', Indonesia') +
+                '&limit=1&countrycodes=id',
+            { headers: { 'Accept-Language': 'id,en' } })
+            .then(function(res) { return res.json(); })
+            .then(function(kotaData) {
+                if (!kotaData || kotaData.length === 0) throw new Error('kota tidak ditemukan');
+                var bb = kotaData[0].boundingbox;
+                var viewbox = bb[2] + ',' + bb[1] + ',' + bb[3] + ',' + bb[0];
+                return fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
+                    encodeURIComponent(alamatVilla) +
+                    '&limit=1&countrycodes=id&viewbox=' + viewbox + '&bounded=1',
+                    { headers: { 'Accept-Language': 'id,en' } });
+            })
+            .then(function(res) { return res.json(); })
             .then(function(data) {
-               if (data && data.length > 0) {
-                    setMarker(parseFloat(data[0].lat), parseFloat(data[0].lon), queries[index].zoom);
+                if (data && data.length > 0) {
+                    setMarker(parseFloat(data[0].lat), parseFloat(data[0].lon), 16);
                 } else {
-                    tryNext(index + 1);
+                    throw new Error('alamat tidak ditemukan');
                 }
             })
-            .catch(function() { tryNext(index + 1); });
+            .catch(function() {
+                fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
+                        encodeURIComponent(kotaVilla + ', Indonesia') +
+                        '&limit=1&countrycodes=id',
+                    { headers: { 'Accept-Language': 'id,en' } })
+                    .then(function(res) { return res.json(); })
+                    .then(function(d) {
+                        var lat = d && d.length > 0 ? parseFloat(d[0].lat) : -6.2088;
+                        var lng = d && d.length > 0 ? parseFloat(d[0].lon) : 106.8456;
+                        setMarker(lat, lng, 13);
+                    });
+            });
     }
 
-    tryNext(0);
-
-});
-
     // ===== FOTO VILLA =====
-    function gantifoto(el, src) {
+    window.gantifoto = function(el, src) {
         document.getElementById('fotoUtama').src = src;
-        document.querySelectorAll('.foto-thumb').forEach(function (t) {
+        document.querySelectorAll('.foto-thumb').forEach(function(t) {
             t.classList.remove('active');
         });
         el.classList.add('active');
-    }
+    };
 
     // ===== HITUNG TOTAL =====
     function hitungTotal() {
@@ -549,27 +554,33 @@
             }
         }
     }
-    document.querySelector('input[name="checkin"]').addEventListener('change', hitungTotal);
-    document.querySelector('input[name="checkout"]').addEventListener('change', hitungTotal);
+    var inputCheckin  = document.querySelector('input[name="checkin"]');
+    var inputCheckout = document.querySelector('input[name="checkout"]');
+    if (inputCheckin)  inputCheckin.addEventListener('change', hitungTotal);
+    if (inputCheckout) inputCheckout.addEventListener('change', hitungTotal);
 
     // ===== RATING BINTANG =====
-    var selectedRating = parseInt(document.getElementById('selectedRatingVal')?.value || '0');
+    var selectedRating = 0;
+    var ratingVal = document.getElementById('selectedRatingVal');
+    if (ratingVal) selectedRating = parseInt(ratingVal.value || '0');
 
-    function hoverStar(n) {
-        document.querySelectorAll('#starContainer label').forEach(function (s, i) {
+    window.hoverStar = function(n) {
+        document.querySelectorAll('#starContainer label').forEach(function(s, i) {
             s.style.color = i < n ? '#ffc107' : '#dee2e6';
         });
-    }
+    };
 
-    function resetStar() {
-        document.querySelectorAll('#starContainer label').forEach(function (s, i) {
+    window.resetStar = function() {
+        document.querySelectorAll('#starContainer label').forEach(function(s, i) {
             s.style.color = i < selectedRating ? '#ffc107' : '#dee2e6';
         });
-    }
+    };
 
-    function selectStar(n) {
+    window.selectStar = function(n) {
         selectedRating = n;
         document.getElementById('star' + n).checked = true;
-    }
+    };
+
+}); 
 </script>
 @endpush
