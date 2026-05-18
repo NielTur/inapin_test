@@ -9,11 +9,80 @@ use App\Models\DokumenVilla;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class VillaController extends Controller
 {
+    // ── Geocoding helper ──────────────────────────────────────
+    private function geocodeAlamat(Request $request): array
+    {
+        // Structured search — pisah street/city/state, jauh lebih akurat
+        $street = collect([$request->alamat, $request->kelurahan, $request->kecamatan])
+            ->filter()
+            ->implode(', ');
+
+        $attempts = [];
+
+        // Attempt 1: full structured
+        if ($street && $request->filled('kota')) {
+            $attempts[] = array_filter([
+                'street' => $street,
+                'city' => $request->kota,
+                'state' => $request->provinsi ?: null,
+                'format' => 'json',
+                'limit' => 1,
+                'countrycodes' => 'id',
+            ]);
+        }
+
+        // Attempt 2: kecamatan+kelurahan sebagai street
+        $streetShort = collect([$request->kecamatan, $request->kelurahan])->filter()->implode(', ');
+        if ($streetShort && $request->filled('kota')) {
+            $attempts[] = array_filter([
+                'street' => $streetShort,
+                'city' => $request->kota,
+                'state' => $request->provinsi ?: null,
+                'format' => 'json',
+                'limit' => 1,
+                'countrycodes' => 'id',
+            ]);
+        }
+
+        // Attempt 3: city + state saja (fallback)
+        if ($request->filled('kota')) {
+            $attempts[] = array_filter([
+                'city' => $request->kota,
+                'state' => $request->provinsi ?: null,
+                'format' => 'json',
+                'limit' => 1,
+                'countrycodes' => 'id',
+            ]);
+        }
+
+        foreach ($attempts as $params) {
+            try {
+                $resp = Http::withHeaders([
+                    'User-Agent' => 'inapin-villaapp/1.0',
+                    'Accept-Language' => 'id,en',
+                ])->timeout(6)->get('https://nominatim.openstreetmap.org/search', $params);
+
+                $data = $resp->json();
+                if (!empty($data[0]['lat'])) {
+                    return [
+                        'latitude' => round((float) $data[0]['lat'], 8),
+                        'longitude' => round((float) $data[0]['lon'], 8),
+                    ];
+                }
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+
+        return ['latitude' => null, 'longitude' => null];
+    }
+
     public function index(): View
     {
         $villas = Villa::where('id_owner', Auth::id())
@@ -57,6 +126,15 @@ class VillaController extends Controller
             'foto.*.max' => 'Ukuran foto maksimal 2MB.',
         ]);
 
+        // if ($request->filled('latitude') && $request->filled('longitude')) {
+        //     $coords = [
+        //         'latitude' => (float) $request->latitude,
+        //         'longitude' => (float) $request->longitude,
+        //     ];
+        // } else {
+        //     $coords = $this->geocodeAlamat($request);
+        // }
+
         $villa = Villa::create([
             'id_owner' => Auth::id(),
             'nama_villa' => $request->nama_villa,
@@ -65,8 +143,8 @@ class VillaController extends Controller
             'kelurahan' => $request->kelurahan,
             'kecamatan' => $request->kecamatan,
             'provinsi' => $request->provinsi,
-            'latitude' => $request->latitude ?: null,
-            'longitude' => $request->longitude ?: null,
+            // 'latitude' => $coords['latitude'],
+            // 'longitude' => $coords['longitude'],
             'alamat' => $request->alamat,
             'harga' => $request->harga,
             'kapasitas' => $request->kapasitas,
@@ -134,10 +212,18 @@ class VillaController extends Controller
             'kapasitas' => 'required|integer|min:1',
             'jumlah_kamar' => 'required|integer|min:1',
             'jumlah_kamar_mandi' => 'required|integer|min:1',
-            'status' => 'required|in:pending,disetujui,ditolak,nonaktif',
             'fasilitas' => 'nullable|array',
             'foto.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
+
+        // if ($request->filled('latitude') && $request->filled('longitude')) {
+        //     $coords = [
+        //         'latitude' => (float) $request->latitude,
+        //         'longitude' => (float) $request->longitude,
+        //     ];
+        // } else {
+        //     $coords = $this->geocodeAlamat($request);
+        // }
 
         $villa->update([
             'nama_villa' => $request->nama_villa,
@@ -146,8 +232,8 @@ class VillaController extends Controller
             'kelurahan' => $request->kelurahan,
             'kecamatan' => $request->kecamatan,
             'provinsi' => $request->provinsi,
-            'latitude' => $request->latitude ?: null,
-            'longitude' => $request->longitude ?: null,
+            // 'latitude' => $coords['latitude'],
+            // 'longitude' => $coords['longitude'],
             'alamat' => $request->alamat,
             'harga' => $request->harga,
             'kapasitas' => $request->kapasitas,
@@ -157,7 +243,7 @@ class VillaController extends Controller
             'instagram' => $request->instagram,
             'facebook' => $request->facebook,
             'tiktok' => $request->tiktok,
-            'status' => $request->status,
+            'status' => $request->status ?? $villa->status,
         ]);
 
         $villa->fasilitasVilla()->delete();

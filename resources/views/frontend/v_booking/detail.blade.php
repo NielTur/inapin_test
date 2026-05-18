@@ -28,7 +28,7 @@
                 @php
                     $statusConfig = [
                         'dibayar' => ['bg' => '#ecfdf5', 'color' => '#10b981', 'icon' => 'fa-check-circle', 'label' => 'Pembayaran Diterima', 'sub' => 'Menunggu konfirmasi check-in dari owner.'],
-                        'checked_in' => ['bg' => '#eff6ff', 'color' => '#3b82f6', 'icon' => 'fa-home', 'label' => 'Sedang Menginap', 'sub' => 'Selamat menikmati villa Anda!'],
+                        'checked_in' => ['bg' => '#eff6ff', 'color' => '#3b82f6', 'icon' => 'fa-home', 'label' => 'Sedang Menginap', 'sub' => 'Selamat Menikmati Villa Anda!'],
                         'checked_out' => ['bg' => '#f0fdf4', 'color' => '#16a34a', 'icon' => 'fa-flag-checkered', 'label' => 'Selesai Menginap', 'sub' => 'Terima kasih telah menginap bersama kami.'],
                         'dibatalkan' => ['bg' => '#f9fafb', 'color' => '#6b7280', 'icon' => 'fa-ban', 'label' => 'Pemesanan Dibatalkan', 'sub' => 'Pemesanan ini telah dibatalkan.'],
                     ];
@@ -163,8 +163,8 @@
                                 <div class="d-flex align-items-center gap-3 mb-3">
                                     <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                                         style="width:36px; height:36px;
-                                               background:{{ $stepOrder <= $currentOrder ? 'var(--primary)' : '#e9ecef' }};
-                                               color:{{ $stepOrder <= $currentOrder ? '#fff' : '#adb5bd' }};">
+                                                                                   background:{{ $stepOrder <= $currentOrder ? 'var(--primary)' : '#e9ecef' }};
+                                                                                   color:{{ $stepOrder <= $currentOrder ? '#fff' : '#adb5bd' }};">
                                         <i class="fa {{ $step['icon'] }}" style="font-size:13px;"></i>
                                     </div>
                                     <span class="small {{ $stepOrder <= $currentOrder ? 'fw-semibold text-dark' : 'text-muted' }}">
