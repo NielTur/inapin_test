@@ -136,14 +136,14 @@
             <div class="d-flex align-items-center gap-2">
                 <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0"
                     style="width:38px; height:38px; font-size:15px;">
-                    {{ strtoupper(substr(auth()->user()->nama ?? 'O', 0, 1)) }}
+                    {{ strtoupper(substr(Auth::guard('owner')->user()->nama ?? 'O', 0, 1)) }}
                 </div>
                 <div class="overflow-hidden">
                     <p class="mb-0 fw-semibold text-truncate" style="font-size:13px;">
-                        {{ auth()->user()->nama ?? 'Owner' }}
+                        {{ Auth::guard('owner')->user()->nama ?? 'Owner' }}
                     </p>
                     <p class="mb-0 text-muted text-truncate" style="font-size:11px;">
-                        {{ auth()->user()->email ?? '' }}
+                        {{ Auth::guard('owner')->user()->email ?? '' }}
                     </p>
                 </div>
             </div>
@@ -168,22 +168,28 @@
                 class="nav-link {{ request()->routeIs('owner.pesanan.*') ? 'active' : '' }}">
                 <i class="fa fa-clipboard-list"></i> Pesanan Masuk
                 @php
-                    $pesananBaru = \App\Models\Pemesanan::whereHas('villa', function ($q) {
-                        $q->where('id_owner', auth()->id());
-                    })->where('status', 'menunggu')->count();
+                $pesananBaru = \App\Models\Pemesanan::whereHas('villa', function ($q) {
+                $q->where('id_owner', Auth::guard('owner')->id());
+                })->where('status', 'menunggu')->count();
                 @endphp
                 @if($pesananBaru > 0)
-                    <span class="badge bg-danger ms-auto">{{ $pesananBaru }}</span>
+                <span class="badge bg-danger ms-auto">{{ $pesananBaru }}</span>
                 @endif
             </a>
 
             <span class="nav-section">Akun</span>
 
+            <a href="{{ route('owner.akun.profil') }}"
+                class="nav-link {{ request()->routeIs('owner.akun.*') ? 'active' : '' }}">
+                <i class="fa fa-user"></i> Profil Saya
+            </a>
+
             <a href="{{ route('beranda') }}" class="nav-link" target="_blank">
                 <i class="fa fa-external-link-alt"></i> Lihat Website
             </a>
 
-            <form action="{{ route('logout') }}" method="POST" class="m-0">
+            {{-- FIX: route('owner.logout') bukan route('logout') --}}
+            <form action="{{ route('owner.logout') }}" method="POST" class="m-0">
                 @csrf
                 <button type="submit" class="nav-link border-0 bg-transparent w-100 text-start text-danger">
                     <i class="fa fa-sign-out-alt"></i> Keluar
@@ -215,9 +221,9 @@
 
         {{-- Flash Messages --}}
         @if(session('success') || session('error') || session('warning'))
-            <div class="px-4 pt-3">
-                @include('frontend.v_components.alert')
-            </div>
+        <div class="px-4 pt-3">
+            @include('frontend.v_components.alert')
+        </div>
         @endif
 
         {{-- Konten Halaman --}}
