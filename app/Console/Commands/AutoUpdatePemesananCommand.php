@@ -30,7 +30,7 @@ class AutoUpdatePemesananCommand extends Command
             ->whereHas(
                 'detailPemesanan',
                 fn($q) =>
-                $q->where('tanggal_checkin', '<', now()->subDay()->toDateString())
+                $q->where('tanggal_checkin', '<=', now()->subDay()->toDateString())
             )
             ->with('villa')
             ->get();
