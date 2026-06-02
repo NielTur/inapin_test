@@ -24,14 +24,14 @@ class AkunController extends Controller
 
         $request->validate([
             'nama'          => 'required|string|max:100',
-            'phone'         => 'required|string|max:20',
+            'phone'         => 'required|string|min:9|max:20',
             'tanggal_lahir' => 'required|date',
             'alamat'        => 'nullable|string|max:255',
             'nik'           => 'nullable|string|size:16',
             'password_baru' => 'nullable|min:8|confirmed',
         ], [
             'nama.required'            => 'Nama lengkap wajib diisi.',
-            'phone.required'           => 'No. handphone wajib diisi.',
+            'phone.min'                => 'No. handphone minimal 9 digit.',
             'tanggal_lahir.required'   => 'Tanggal lahir wajib diisi.',
             'nik.size'                 => 'NIK harus 16 digit.',
             'password_baru.min'        => 'Password baru minimal 8 karakter.',

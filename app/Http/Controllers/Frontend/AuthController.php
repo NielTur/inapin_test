@@ -52,14 +52,15 @@ class AuthController extends Controller
         $request->validate([
             'nama'          => 'required|string|max:100',
             'email'         => 'required|email|unique:customer,email',
-            'phone'         => 'required|string|max:20',
+            'phone'         => 'required|string|min:9|max:20',
             'tanggal_lahir' => 'required|date',
             'password'      => 'required|min:8|confirmed',
-        ], [
+            ], 
+            [
             'nama.required'          => 'Nama lengkap wajib diisi.',
             'email.required'         => 'Email wajib diisi.',
             'email.unique'           => 'Email sudah terdaftar.',
-            'phone.required'         => 'No. handphone wajib diisi.',
+            'phone.min'              => 'No. handphone minimal 9 digit.',
             'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
             'password.required'      => 'Password wajib diisi.',
             'password.min'           => 'Password minimal 8 karakter.',

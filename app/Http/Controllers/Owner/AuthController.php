@@ -60,7 +60,7 @@ class AuthController extends Controller
         $request->validate([
             'nama'          => 'required|string|max:100',
             'email'         => 'required|email|unique:owner,email',
-            'phone'         => 'required|string|max:20',
+            'phone'         => 'required|string|min:9|max:20',
             'tanggal_lahir' => 'required|date',
             'nik'           => 'nullable|string|size:16',
             'alamat'        => 'nullable|string|max:255',
@@ -69,7 +69,7 @@ class AuthController extends Controller
             'nama.required'          => 'Nama lengkap wajib diisi.',
             'email.required'         => 'Email wajib diisi.',
             'email.unique'           => 'Email sudah terdaftar.',
-            'phone.required'         => 'No. handphone wajib diisi.',
+            'phone.min'              => 'No. handphone minimal 9 digit.',
             'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
             'nik.size'               => 'NIK harus 16 digit.',
             'password.required'      => 'Password wajib diisi.',
