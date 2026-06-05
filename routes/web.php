@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 // ===================================================================
 Route::prefix('')->group(function () {
 
+    Route::redirect('/', '/beranda');
     // PUBLIC
     Route::get('/beranda', [BerandaController::class, 'index'])->name('beranda');
     Route::get('/villa', [VillaController::class, 'index'])->name('villa.index');
